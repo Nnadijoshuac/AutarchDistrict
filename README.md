@@ -1,122 +1,168 @@
-﻿# Agentic Wallets For AI Agents (Solana Devnet)
+# Autarch: Agentic Wallets for AI Agents (Solana Devnet)
 
-This repository is a monorepo prototype for autonomous AI agent wallets on Solana devnet.
+Autarch is a devnet prototype that provides autonomous wallet accounts for AI agents.  
+Each agent owns its own signer, receives funds, executes policy-gated trades, and reports outcomes through a shared control plane.
 
-## Features
+## Bounty Alignment
 
-- Programmatic wallet creation (`Keypair.generate`)
-- Encrypted keystore at rest (AES-256-GCM)
-- Policy-gated automated signing (no manual signing prompts)
-- Devnet-only enforcement (hard fail on mainnet)
-- Multi-agent runner with concurrency controls
-- Mock Anchor DeFi program with PDA authority and 1:1 swaps
-- Fastify API + WebSocket event stream
-- Minimal Next.js dashboard
+This prototype demonstrates:
+
+- programmatic wallet creation
+- automated transaction signing (no manual wallet prompts)
+- SOL and SPL token support
+- interaction with a test protocol (Anchor mock DeFi program)
+- multiple agents operating independently on devnet
+- open-source implementation with setup and run instructions
+
+## Core Flow
+
+1. create agent wallet accounts
+2. fund and initialize agents
+3. AI strategy simulation decides trade intent
+4. policy engine validates limits and allowlist
+5. wallet executor simulates, signs, submits, confirms
+6. dashboard shows status, signatures, and errors
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  subgraph FE[Frontend]
-    UI[Next.js Dashboard]
+  subgraph WEB[Web]
+    UI[Next.js App]
   end
 
-  subgraph BE[Backend]
+  subgraph BACKEND[Backend]
     API[Fastify REST + WS]
-    AR[Agent Runner]
-    WS[Wallet Service]
-    KS[Encrypted Keystore]
-    POL[Policy Gate]
+    RUNNER[Agent Runner]
+    STRAT[Strategy Engine]
+    POLICY[Policy Engine]
+    EXEC[Wallet Executor]
+    SIGNER[Encrypted Signer Provider]
   end
 
   subgraph CHAIN[Solana Devnet]
-    DAPP[Anchor Mock DeFi]
+    MOCK[Anchor Mock DeFi]
     SPL[SPL Token]
     SYS[System Program]
   end
 
   UI --> API
-  API --> AR
-  AR --> WS
-  WS --> KS
-  WS --> POL
-  WS --> CHAIN
+  API --> RUNNER
+  RUNNER --> STRAT
+  RUNNER --> EXEC
+  EXEC --> POLICY
+  EXEC --> SIGNER
+  EXEC --> CHAIN
 ```
 
 ## Prerequisites
 
-- Node.js >= 20
-- pnpm >= 10
+- Node.js 20+
+- corepack enabled
+- pnpm 10+
 - Solana CLI
 - Anchor CLI
-- Rust toolchain
+- Rust toolchain (for Anchor program build/deploy)
 
-## Setup
+## Environment
 
-1. `solana config set -ud`
-2. `solana-keygen new`
-3. `solana airdrop 2`
-4. `pnpm install`
-5. `Copy .env.example to .env`
-6. Set `KEYSTORE_MASTER_KEY` to a strong random value
-7. `pnpm anchor:build`
-8. `pnpm anchor:test`
-9. `pnpm anchor:deploy:devnet`
-10. Set deployed `PROGRAM_ID` in `.env`
-11. `pnpm dev`
+Copy env file:
 
-## Demo
+- `Copy-Item .env.example .env`
 
-1. `pnpm anchor:deploy:devnet`
-2. `pnpm demo:devnet`
-3. Optional API flow:
-4. `POST /demo/setup` (creates mints, ATAs, seeds balances, tries pool init)
-5. `POST /demo/run` (fixed swap rounds and returns signatures)
-6. `POST /demo/stop`
+Set required values in `.env`:
 
-The backend exposes:
+- `KEYSTORE_MASTER_KEY` (32+ chars)
+- `PROGRAM_ID` (deployed Anchor program id)
+- `AGENT_STRATEGY` (`heuristic_ai` or `random`)
+- `AI_MIN_CONFIDENCE` (0..1, default `0.5`)
 
-- `POST /agents`
-- `GET /agents`
-- `POST /demo/setup`
-- `POST /demo/run`
-- `POST /demo/stop`
+## Solana Setup (Devnet)
+
+```powershell
+solana config set --url https://api.devnet.solana.com
+solana config set --keypair C:\Users\<you>\.config\solana\id.json
+solana balance
+```
+
+## Install
+
+```powershell
+corepack pnpm install
+```
+
+## Run Backend and Web
+
+Terminal 1:
+
+```powershell
+corepack pnpm --filter backend dev
+```
+
+Terminal 2:
+
+```powershell
+corepack pnpm --filter web dev
+```
+
+Open:
+
+- `http://localhost:3000` (landing)
+- `http://localhost:3000/app` (dashboard)
+
+## Deploy Mock Program to Devnet
+
+```powershell
+anchor build
+anchor deploy --provider.cluster devnet
+```
+
+Then set deployed program id to `.env` `PROGRAM_ID`.
+
+## API Demo Flow
+
+### Setup
+
+```powershell
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/demo/setup -ContentType "application/json" -Body "{}"
+```
+
+### Run
+
+```powershell
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/demo/run -ContentType "application/json" -Body '{"rounds":3,"amount":1000}'
+```
+
+### Stop
+
+```powershell
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/demo/stop -ContentType "application/json" -Body "{}"
+```
+
+## Strategy Modes
+
+- `heuristic_ai` (default): confidence-based synthetic signal strategy
+- `random`: fallback random direction/amount strategy
 
 ## Security Notes
 
-- Solana keypair files are plaintext by default; this project encrypts secret key bytes at rest.
-- Keys are decrypted only in memory for signing.
-- Policy layer blocks disallowed programs and overspend.
-- Devnet-only guard prevents accidental mainnet usage.
+- signer secret bytes are encrypted at rest (AES-256-GCM)
+- secrets are decrypted in memory only during signing
+- allowlist and spend caps are enforced before submit
+- devnet-only RPC guard prevents accidental mainnet usage
 
-## Troubleshooting
+## Project Structure
 
-- Blockhash expired: retry path in wallet confirmation refreshes blockhash and resubmits within retry budget.
-- Airdrop limited: wait and retry with smaller requests.
-- Missing ATA: wallet helper creates ATA and retries.
-- Tx not confirmed: use signature status polling and check expiration.
-- Program ID mismatch: update `PROGRAM_ID` in `.env` after `anchor deploy --provider.cluster devnet`.
+- `apps/backend`: API, signer/keystore, runner, policy, strategies, tests
+- `apps/web`: landing + dashboard
+- `programs/agent_mock_defi`: Anchor test protocol
+- `SKILLS.md`: runtime instructions for autonomous agents
+- `DEEP_DIVE.md`: design and security explanation
 
-## Deploy Checklist
+## Validation Commands
 
-1. `solana config set -ud`
-2. `solana airdrop 2`
-3. `anchor deploy --provider.cluster devnet`
-4. Update `.env` `PROGRAM_ID`
-5. `pnpm demo:devnet`
-
-## Repository Layout
-
-- `apps/backend` Fastify API, keystore, wallet, runner, tests
-- `apps/web` Next.js dashboard
-- `programs/agent_mock_defi` Anchor program and tests
-
-## Scripts
-
-- `pnpm dev`
-- `pnpm lint`
-- `pnpm test`
-- `pnpm anchor:build`
-- `pnpm anchor:test`
-- `pnpm anchor:deploy:devnet`
-- `pnpm demo:devnet`
+```powershell
+corepack pnpm --filter backend test
+corepack pnpm --filter backend build
+corepack pnpm --filter web build
+```
