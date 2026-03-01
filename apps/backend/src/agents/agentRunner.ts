@@ -84,8 +84,16 @@ export class AgentRunner extends EventEmitter {
       return;
     }
 
-    const action = strategy.nextAction(state);
+    const decision = strategy.decide(state);
+    const action = decision.action;
     if (!action) {
+      this.emit("event", {
+        timestamp: new Date().toISOString(),
+        agentId,
+        action: `hold:${decision.confidence}`,
+        status: "ok",
+        err: decision.reason
+      } satisfies RunnerEvent);
       return;
     }
 
@@ -105,7 +113,7 @@ export class AgentRunner extends EventEmitter {
       this.emit("event", {
         timestamp: new Date().toISOString(),
         agentId,
-        action: `${action.kind}:${action.direction}:${action.amount}`,
+        action: `${action.kind}:${action.direction}:${action.amount}:${decision.confidence}`,
         status: "ok",
         signature
       } satisfies RunnerEvent);
@@ -116,7 +124,7 @@ export class AgentRunner extends EventEmitter {
       this.emit("event", {
         timestamp: new Date().toISOString(),
         agentId,
-        action: `${action.kind}:${action.direction}:${action.amount}`,
+        action: `${action.kind}:${action.direction}:${action.amount}:${decision.confidence}`,
         status: "error",
         err: message
       } satisfies RunnerEvent);

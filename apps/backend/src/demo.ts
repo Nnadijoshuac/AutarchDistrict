@@ -1,8 +1,8 @@
 import { createMint, getAccount, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { AgentRunner } from "./agents/agentRunner.js";
 import { loadConfig } from "./config.js";
+import { createStrategyFactory } from "./agents/strategyFactory.js";
 import { FileKeystore } from "./keystore/keystore.js";
 import { createLogger } from "./observability/logger.js";
 import { SpendDb } from "./policy/spendDb.js";
@@ -32,7 +32,7 @@ async function main() {
   );
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(programId);
-  const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
+  const runner = new AgentRunner(wallet, protocol, createStrategyFactory(config));
 
   logger.info("Step 1: create admin + agents");
   const admin = signerProvider.createSigner();

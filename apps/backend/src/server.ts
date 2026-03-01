@@ -10,7 +10,7 @@ import { TxPolicyEngine } from "./wallet/txPolicy.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
 import { MockDefiClient } from "./protocol/mockDefiClient.js";
 import { AgentRunner } from "./agents/agentRunner.js";
-import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
+import { createStrategyFactory } from "./agents/strategyFactory.js";
 import { registerAgentRoutes } from "./routes/agents.js";
 import { registerDemoRoutes } from "./routes/demo.js";
 import { SpendDb } from "./policy/spendDb.js";
@@ -33,7 +33,7 @@ export async function buildServer() {
   }, spendDb);
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(new PublicKey(config.PROGRAM_ID));
-  const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
+  const runner = new AgentRunner(wallet, protocol, createStrategyFactory(config));
 
   const sockets = new Set<{ send: (msg: string) => void }>();
   app.get("/ws", { websocket: true }, (socket) => {

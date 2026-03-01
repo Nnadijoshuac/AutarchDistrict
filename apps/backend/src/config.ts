@@ -8,6 +8,8 @@ const envSchema = z.object({
   PROGRAM_ID: z.string().min(32),
   DEMO_NUM_AGENTS: z.coerce.number().int().positive().default(5),
   DEMO_SWAP_AMOUNT: z.coerce.number().int().positive().default(1000),
+  AGENT_STRATEGY: z.enum(["heuristic_ai", "random"]).default("heuristic_ai"),
+  AI_MIN_CONFIDENCE: z.coerce.number().min(0).max(1).default(0.5),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   PORT: z.coerce.number().int().positive().default(3001),
   WEB_ORIGIN: z.string().url().default("http://localhost:3000")

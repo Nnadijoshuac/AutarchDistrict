@@ -6,6 +6,12 @@ export type AgentAction = {
   amount: number;
 };
 
+export type AgentDecision = {
+  action: AgentAction | null;
+  confidence: number;
+  reason: string;
+};
+
 export type AgentState = {
   agentId: string;
   publicKey: string;
@@ -17,5 +23,5 @@ export type AgentState = {
 
 export interface AgentStrategy {
   name: string;
-  nextAction(state: AgentState): AgentAction | null;
+  decide(state: AgentState): AgentDecision;
 }
