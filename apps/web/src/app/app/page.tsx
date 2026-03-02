@@ -101,9 +101,9 @@ export default function DashboardPage() {
       <div className="container">
         <header className="app-header">
           <div>
-            <div className="pill">Arka Control Plane</div>
-            <h1 className="display">Agent Wallet Operations Dashboard</h1>
-            <p>Provision, fund, run, and inspect autonomous wallet transactions on Solana devnet.</p>
+            <div className="pill">Autarch District Control Plane</div>
+            <h1 className="display">Agent Wallet Dashboard</h1>
+            <p>Provision, fund, execute, and monitor autonomous wallet activity on Solana devnet.</p>
           </div>
           <Link href="/" className="btn btn-ghost">
             Back to Landing
@@ -117,7 +117,7 @@ export default function DashboardPage() {
           </div>
           <div className="card kpi">
             <div className="kpi-label">WebSocket</div>
-            <div className="kpi-value" style={{ color: wsConnected ? "#78f7c4" : "#ff9ba7" }}>
+            <div className="kpi-value" style={{ color: wsConnected ? "#238f5b" : "#d04747" }}>
               {wsConnected ? "Connected" : "Offline"}
             </div>
           </div>

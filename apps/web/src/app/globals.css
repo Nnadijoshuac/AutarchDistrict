@@ -63,12 +63,7 @@ a {
   padding: 11px 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
 
 .btn:disabled {
@@ -740,11 +735,7 @@ button:focus-visible {
   border-radius: 999px;
   border: 1px solid transparent;
   font-weight: 600;
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
-}
-
-.minimal-btn:hover {
-  transform: translateY(-1px);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 .minimal-btn-primary {
@@ -1069,4 +1060,90 @@ button:focus-visible {
     width: min(100%, 460px);
     margin: 20px auto 0;
   }
+}
+
+/* Dashboard Theme Alignment */
+.dashboard-root {
+  background: #faf6f1;
+  color: #141414;
+}
+
+.dashboard-root .card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.06);
+  backdrop-filter: none;
+}
+
+.dashboard-root .pill {
+  border: 1px solid rgba(255, 106, 0, 0.28);
+  background: rgba(255, 106, 0, 0.08);
+  color: #ff6a00;
+}
+
+.dashboard-root .btn-primary {
+  background: #ff6a00;
+  color: #fff;
+}
+
+.dashboard-root .btn-primary:hover {
+  background: #e85f00;
+}
+
+.dashboard-root .btn-ghost {
+  background: #fff;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+  color: #141414;
+}
+
+.dashboard-root .btn-ghost:hover {
+  background: #fff6ee;
+}
+
+.dashboard-root .app-header p,
+.dashboard-root .kpi-label,
+.dashboard-root .field label,
+.dashboard-root .subtle,
+.dashboard-root .agent-table th,
+.dashboard-root .detail-item small {
+  color: #5b5b5b;
+}
+
+.dashboard-root .field input {
+  background: #fff;
+  color: #141414;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+}
+
+.dashboard-root .agent-row.active {
+  background: rgba(255, 106, 0, 0.12);
+}
+
+.dashboard-root .status-chip {
+  border-color: rgba(20, 20, 20, 0.16);
+}
+
+.dashboard-root .status-chip.running {
+  color: #238f5b;
+  border-color: rgba(35, 143, 91, 0.35);
+}
+
+.dashboard-root .status-chip.error {
+  color: #d04747;
+  border-color: rgba(208, 71, 71, 0.35);
+}
+
+.dashboard-root .status-ok {
+  background: rgba(35, 143, 91, 0.1);
+  border-color: rgba(35, 143, 91, 0.26);
+}
+
+.dashboard-root .status-error {
+  background: rgba(208, 71, 71, 0.1);
+  border-color: rgba(208, 71, 71, 0.26);
+}
+
+.dashboard-root .log-item {
+  background: #fff;
+  border-color: rgba(20, 20, 20, 0.1);
 }
