@@ -4,6 +4,7 @@ import websocket from "@fastify/websocket";
 import { PublicKey } from "@solana/web3.js";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { Buffer } from "node:buffer";
 import { loadConfig } from "./config.js";
 import { createConnection } from "./solana/connection.js";
 import { FileKeystore } from "./keystore/keystore.js";
@@ -88,7 +89,42 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 // We reuse one lazily-initialized Fastify instance across invocations.
 const vercelServerPromise = buildServer();
 
+async function readBody(req: IncomingMessage): Promise<Buffer | undefined> {
+  if (req.method === "GET" || req.method === "HEAD") {
+    return undefined;
+  }
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  if (chunks.length === 0) {
+    return undefined;
+  }
+  return Buffer.concat(chunks);
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const { app } = await vercelServerPromise;
-  app.server.emit("request", req, res);
+  const payload = await readBody(req);
+  const reply = await app.inject({
+    method: req.method as
+      | "GET"
+      | "POST"
+      | "PUT"
+      | "PATCH"
+      | "DELETE"
+      | "HEAD"
+      | "OPTIONS",
+    url: req.url ?? "/",
+    headers: req.headers as Record<string, string>,
+    payload
+  });
+
+  res.statusCode = reply.statusCode;
+  for (const [key, value] of Object.entries(reply.headers)) {
+    if (value !== undefined) {
+      res.setHeader(key, value);
+    }
+  }
+  res.end(reply.body);
 }
