@@ -945,3 +945,128 @@ button:focus-visible {
     margin-top: 44px;
   }
 }
+
+/* Keep hero media pinned toward right viewport edge */
+.minimal-hero {
+  overflow: visible;
+}
+
+.minimal-visual {
+  justify-content: flex-end;
+  margin-right: calc(50% - 30vw);
+  padding-right: 0;
+}
+
+.image-stack {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+@media (max-width: 1000px) {
+  .minimal-visual {
+    margin-right: 0;
+  }
+}
+
+/* Hero image detached from container */
+.minimal-hero-shell {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(520px, 66vh, 760px);
+}
+
+.minimal-hero-shell .minimal-hero {
+  display: block;
+}
+
+.minimal-hero-shell .minimal-copy {
+  max-width: 620px;
+  padding-right: clamp(0px, 30vw, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.minimal-hero-shell .minimal-copy h1 {
+  max-width: 13ch;
+  margin-top: 14px;
+  line-height: 1.04;
+}
+
+.minimal-hero-shell .minimal-subtext {
+  max-width: 64ch;
+  margin-top: 20px;
+}
+
+.minimal-hero-shell .minimal-actions {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.minimal-hero-shell .minimal-btn {
+  min-width: 148px;
+  min-height: 48px;
+  justify-content: center;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.minimal-hero-shell .minimal-text-link {
+  margin-top: 12px;
+}
+
+.minimal-floating-media {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(38vw, 520px);
+  min-height: 520px;
+  margin-right: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.minimal-floating-media .image-stack {
+  width: 100%;
+  margin: 0;
+  transform: none;
+}
+
+.minimal-floating-media .stack-back,
+.minimal-floating-media .stack-front {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 1000px) {
+  .minimal-hero-shell {
+    min-height: auto;
+  }
+
+  .minimal-hero-shell .minimal-copy {
+    padding-right: 0;
+  }
+
+  .minimal-hero-shell .minimal-copy h1 {
+    max-width: none;
+  }
+
+  .minimal-hero-shell .minimal-btn {
+    min-width: 136px;
+  }
+
+  .minimal-floating-media {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    width: min(100%, 460px);
+    margin: 20px auto 0;
+  }
+}
