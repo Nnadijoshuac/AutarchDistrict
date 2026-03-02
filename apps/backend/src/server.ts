@@ -22,7 +22,9 @@ export async function buildServer() {
   const app = Fastify({ logger: { level: config.LOG_LEVEL } });
 
   await app.register(cors, { origin: config.WEB_ORIGIN });
-  await app.register(websocket);
+  if (!process.env.VERCEL) {
+    await app.register(websocket);
+  }
 
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
   const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), config.KEYSTORE_MASTER_KEY);
@@ -38,10 +40,16 @@ export async function buildServer() {
   const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
 
   const sockets = new Set<{ send: (msg: string) => void }>();
-  app.get("/ws", { websocket: true }, (socket) => {
-    sockets.add(socket);
-    socket.on("close", () => sockets.delete(socket));
-  });
+  if (!process.env.VERCEL) {
+    app.get("/ws", { websocket: true }, (socket) => {
+      sockets.add(socket);
+      socket.on("close", () => sockets.delete(socket));
+    });
+  } else {
+    app.get("/ws", async (_req, reply) => {
+      reply.code(501).send({ ok: false, error: "WebSocket not supported on this deployment" });
+    });
+  }
 
   runner.on("event", (evt) => {
     const serialized = JSON.stringify(evt);
