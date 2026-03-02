@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import { PublicKey } from "@solana/web3.js";
 import { join } from "node:path";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadConfig } from "./config.js";
 import { createConnection } from "./solana/connection.js";
 import { FileKeystore } from "./keystore/keystore.js";
@@ -61,6 +62,7 @@ export async function buildServer() {
   });
   app.get("/health", async () => ({ ok: true }));
 
+  await app.ready();
   return { app };
 }
 
@@ -70,6 +72,15 @@ export async function main() {
   await app.listen({ host: "0.0.0.0", port: config.PORT });
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   void main();
+}
+
+// Vercel serverless entrypoint expects a default function export.
+// We reuse one lazily-initialized Fastify instance across invocations.
+const vercelServerPromise = buildServer();
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const { app } = await vercelServerPromise;
+  app.server.emit("request", req, res);
 }
