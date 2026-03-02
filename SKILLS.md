@@ -22,7 +22,7 @@ Operate Solana devnet agent wallets safely:
 - SPL Token Program: `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`
 - Associated Token Program: `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`
 - Compute Budget Program: `ComputeBudget111111111111111111111111111111`
-- Autarch mock trading program: `PROGRAM_ID` from env
+- Autarch District mock trading program: `PROGRAM_ID` from env
 
 3. Spend limits:
 - enforce max lamports per transfer (policy config)

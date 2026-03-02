@@ -1,13 +1,13 @@
-# Deep Dive: Autarch Agentic Wallet Design
+# Deep Dive: Autarch District Agentic Wallet Design
 
 ## 1. Objective
 
-Autarch provides wallet infrastructure for autonomous AI agents on Solana devnet.  
+Autarch District provides wallet infrastructure for autonomous AI agents on Solana devnet.  
 Each agent receives a dedicated account, signs automatically through backend policy controls, and executes protocol interactions without manual wallet confirmation.
 
 ## 2. System Design
 
-Autarch is split into four concerns:
+Autarch District is split into four concerns:
 
 1. **Agent logic**: generates decisions (`trade` or `hold`) with confidence/reason metadata.
 2. **Wallet execution**: builds instructions, simulates, signs, submits, confirms.
@@ -58,7 +58,7 @@ This provides an explainable AI-like loop suitable for hackathon demonstration w
 
 ## 6. Protocol Interaction
 
-Autarch interacts with a devnet Anchor mock DeFi program:
+Autarch District interacts with a devnet Anchor mock DeFi program:
 
 - initializes pool state
 - derives PDA authority/vault accounts

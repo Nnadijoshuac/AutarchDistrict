@@ -23,12 +23,13 @@ export default function LandingPage() {
 
         <section className="morf-stage">
           <div className="morf-gradient-overlay" />
-          <h1 className="morf-wordmark">AUTARCH</h1>
+          <h1 className="morf-wordmark">AUTARCH DISTRICT</h1>
 
           <article className="morf-copy">
             <h2>Autonomous Wallet Infrastructure</h2>
             <p>
-              Autarch is a creative protocol layer for orchestrating agent wallets, policy-safe execution flows, and
+              Autarch District is a creative protocol layer for orchestrating agent wallets, policy-safe execution
+              flows, and
               interactive onchain operations.
             </p>
             <div className="morf-actions">
@@ -44,7 +45,7 @@ export default function LandingPage() {
           <div className="morf-hero-wrap">
             <Image
               src="/hero.png"
-              alt="Autarch hero visual"
+              alt="Autarch District hero visual"
               fill
               priority
               sizes="(max-width: 900px) 100vw, 52vw"

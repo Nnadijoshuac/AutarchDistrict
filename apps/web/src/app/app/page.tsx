@@ -85,7 +85,7 @@ export default function DashboardPage() {
       <div className="container">
         <header className="app-header">
           <div>
-            <div className="pill">Autarch Control Plane</div>
+            <div className="pill">Autarch District Control Plane</div>
             <h1 className="display">Named Wallet Accounts for AI Agents</h1>
             <p>Create one wallet, fund it, execute autonomous actions, and monitor every transaction.</p>
           </div>

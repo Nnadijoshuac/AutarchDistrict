@@ -1,6 +1,6 @@
-# Autarch: Agentic Wallets for AI Agents (Solana Devnet)
+# Autarch District: Agentic Wallets for AI Agents (Solana Devnet)
 
-Autarch is a devnet prototype that provides autonomous wallet accounts for AI agents.  
+Autarch District is a devnet prototype that provides autonomous wallet accounts for AI agents.  
 Each agent owns its own signer, receives funds, executes policy-gated trades, and reports outcomes through a shared control plane.
 
 ## Bounty Alignment

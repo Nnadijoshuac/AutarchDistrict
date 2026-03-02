@@ -1,6 +1,6 @@
 ﻿# Demo Video Script (Devnet)
 
-1. Intro: Arka is a devnet-only autonomous wallet execution layer for AI agents.
+1. Intro: Autarch District is a devnet-only autonomous wallet execution layer for AI agents.
 2. Show `.env` with `PROGRAM_ID` and `KEYSTORE_MASTER_KEY`.
 3. Run `solana config set -ud` and verify wallet balance.
 4. Deploy Anchor program on devnet: `anchor deploy --provider.cluster devnet`.
