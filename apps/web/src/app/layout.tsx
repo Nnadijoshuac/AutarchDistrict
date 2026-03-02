@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Space_Grotesk, Fraunces } from "next/font/google";
 import "./globals.css";
@@ -13,6 +14,15 @@ const displayFont = Fraunces({
   variable: "--font-display",
   weight: ["500", "600", "700"]
 });
+
+export const metadata: Metadata = {
+  title: "Autarch District",
+  icons: {
+    icon: "/autarchlogo.png",
+    shortcut: "/autarchlogo.png",
+    apple: "/autarchlogo.png"
+  }
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
