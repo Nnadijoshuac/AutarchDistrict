@@ -1080,9 +1080,34 @@ button:focus-visible {
 }
 
 .minimal-floating-media .stack-front {
-  transform: translate(var(--hero-parallax-x, 0), calc(var(--hero-parallax-y, 0) + 10px));
+  transform: translate(var(--hero-parallax-x, 0), calc(var(--hero-parallax-y, 0) + 24px));
   will-change: transform;
   transition: transform 150ms ease-out;
+  animation: heroFrontBlink 0.38s ease-out 1 both;
+}
+
+@keyframes heroFrontBlink {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.72;
+  }
+  42% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minimal-floating-media .stack-front {
+    animation: none;
+  }
 }
 
 @media (max-width: 1000px) {
