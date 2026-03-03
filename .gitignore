@@ -9,3 +9,5 @@ apps/web/.next
 coverage
 target
 .DS_Store
+.dropstone
+.runlogs
