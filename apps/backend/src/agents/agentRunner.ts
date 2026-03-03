@@ -49,6 +49,24 @@ export class AgentRunner extends EventEmitter {
     return created;
   }
 
+  restoreAgents(signers: Array<{ agentId: string; publicKey: string }>): AgentState[] {
+    const restored: AgentState[] = [];
+    for (const signer of signers) {
+      if (this.agents.has(signer.agentId)) {
+        continue;
+      }
+      const state: AgentState = {
+        agentId: signer.agentId,
+        publicKey: signer.publicKey,
+        strategy: this.strategyFactory(signer.agentId).name,
+        lastStatus: "idle"
+      };
+      this.agents.set(signer.agentId, state);
+      restored.push(state);
+    }
+    return restored;
+  }
+
   listAgents(): AgentState[] {
     return [...this.agents.values()];
   }

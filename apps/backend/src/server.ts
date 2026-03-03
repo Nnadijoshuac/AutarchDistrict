@@ -43,6 +43,10 @@ export async function buildServer() {
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(new PublicKey(config.PROGRAM_ID));
   const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
+  const restoredAgents = runner.restoreAgents(keystore.listSigners());
+  if (restoredAgents.length > 0) {
+    app.log.info({ count: restoredAgents.length }, "Restored agents from keystore.");
+  }
 
   const sockets = new Set<{ send: (msg: string) => void }>();
   if (!process.env.VERCEL) {
