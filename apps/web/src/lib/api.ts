@@ -59,6 +59,27 @@ async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   }
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function wakeBackend(maxAttempts = 6, delayMs = 2500): Promise<void> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await apiFetch(`${API_BASE}/health`, { cache: "no-store" });
+      if (res.ok) return;
+      lastError = await parseApiError(res);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+    if (attempt < maxAttempts) {
+      await wait(delayMs);
+    }
+  }
+  if (lastError) throw lastError;
+}
+
 export async function listAgents(): Promise<Agent[]> {
   const res = await apiFetch(`${API_BASE}/agents`, { cache: "no-store" });
   const body = (await res.json()) as { agents: Agent[] };

@@ -8,6 +8,7 @@ import {
   runDemo,
   setupDemo,
   stopDemo,
+  wakeBackend,
   type Agent,
   type DemoRunResponse
 } from "../../lib/api";
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [statusType, setStatusType] = useState<"ok" | "error">("ok");
+  const [statusVisible, setStatusVisible] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [createCount, setCreateCount] = useState(3);
   const [setupAgents, setSetupAgents] = useState(5);
@@ -39,8 +41,31 @@ export default function DashboardPage() {
   const [amount, setAmount] = useState(1000);
 
   useEffect(() => {
-    void refreshAgents();
+    void (async () => {
+      try {
+        setStatus("Reaching Autarch District...", "ok");
+        await wakeBackend();
+        await refreshAgents();
+        setStatus("Autarch District is live.", "ok");
+      } catch (err) {
+        setStatus(err instanceof Error ? err.message : String(err), "error");
+      }
+    })();
   }, []);
+
+  useEffect(() => {
+    if (!statusMessage) {
+      setStatusVisible(false);
+      return;
+    }
+    setStatusVisible(true);
+    const fadeTimer = setTimeout(() => setStatusVisible(false), 2600);
+    const clearTimer = setTimeout(() => setStatusMessage(""), 3000);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [statusMessage]);
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
@@ -256,7 +281,13 @@ export default function DashboardPage() {
             </button>
           </div>
           {statusMessage ? (
-            <div className={`status-banner ${statusType === "ok" ? "status-ok" : "status-error"}`}>{statusMessage}</div>
+            <div
+              className={`status-banner ${statusType === "ok" ? "status-ok" : "status-error"} ${
+                statusVisible ? "status-show" : "status-hide"
+              }`}
+            >
+              {statusMessage}
+            </div>
           ) : null}
         </section>
 

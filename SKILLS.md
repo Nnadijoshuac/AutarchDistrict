@@ -1,44 +1,73 @@
-# Agent Runtime Skills
+# Autarch District - Agent Skills Manifest
 
-Purpose: autonomous agent execution in a Solana devnet sandbox.
+This file describes how autonomous agents are expected to operate inside this project.
 
-## Allowed Networks
+## Mission
+
+Agents provision wallets, execute policy-safe transactions, and report results in a Solana devnet sandbox.
+
+## Allowed Network
 
 - `devnet` only
-- Reject `mainnet-beta`
+- Any non-devnet RPC is rejected by backend config guard
 
-## Allowed Program IDs
+## Allowed Program Surface
 
-- System Program: `11111111111111111111111111111111`
-- SPL Token Program: `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`
-- Associated Token Program: `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`
-- Compute Budget Program: `ComputeBudget111111111111111111111111111111`
-- Mock DeFi Program: from `PROGRAM_ID`
+- System Program
+- SPL Token Program
+- Associated Token Program
+- Compute Budget Program
+- Mock DeFi Program (`PROGRAM_ID`)
 
-## Spend Policy
+Any instruction outside allowlist is blocked by policy.
 
-- Max lamports per transfer: configured in backend policy
-- Max token swap amount: configured in backend policy
-- Daily cap per agent: in-memory counter
+## Execution Rules
 
-## Commands
+1. Build action intent (swap/transfer).
+2. Pass policy validation.
+3. Simulate transaction.
+4. Sign automatically with agent key.
+5. Submit and confirm.
+6. Emit success/error event.
 
-- Start backend: `pnpm --filter backend dev`
-- Start web: `pnpm --filter web dev`
-- Run demo: `pnpm demo:devnet`
+## Spend Controls
 
-## Add New Strategy
+- Per-transfer lamport cap
+- Per-swap token amount cap
+- Per-agent daily volume limit
 
-1. Implement `AgentStrategy` in `apps/backend/src/agents/strategies`
-2. Register strategy in `agentRunner.ts`
-3. Add tests in `apps/backend/test/agentRunner.test.ts`
+Configured in backend policy engine.
 
-## Module Pointers
+## Operational Commands
 
-- Wallet and signing: `apps/backend/src/wallet`
-- Policy gate: `apps/backend/src/wallet/txPolicy.ts`
-- Keystore: `apps/backend/src/keystore`
+- Start backend:
+```bash
+pnpm --filter backend dev
+```
+- Start frontend:
+```bash
+pnpm --filter web dev
+```
+- Run devnet demo script:
+```bash
+pnpm demo:devnet
+```
 
-## Safety Rule
+## Key Safety Rules
 
-- Never log private keys or decrypted secret bytes.
+- Never print private keys.
+- Never persist decrypted keys to logs or external sinks.
+- Keep `KEYSTORE_MASTER_KEY` in secrets manager, not source control.
+
+## Notification Hooks
+
+Optional Telegram notifications can broadcast:
+- Agent provisioning
+- Demo setup/run/stop summaries
+- Per-agent runtime events (if enabled)
+
+## Extension Points
+
+1. Add strategy in `apps/backend/src/agents/strategies`
+2. Wire strategy factory in `agentRunner`
+3. Add tests for behavior and policy boundaries

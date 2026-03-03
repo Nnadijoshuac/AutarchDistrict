@@ -1,122 +1,161 @@
-﻿# Agentic Wallets For AI Agents (Solana Devnet)
+# Autarch District - Agentic Wallets for AI Agents (Solana Devnet)
 
-This repository is a monorepo prototype for autonomous AI agent wallets on Solana devnet.
+Autarch District is a prototype control plane for autonomous AI-agent wallets on Solana devnet.
 
-## Features
+It provides:
+- Programmatic wallet provisioning for agents
+- Automated transaction signing and execution
+- Policy-gated, devnet-only transaction controls
+- SPL token setup and swaps against a mock Anchor DeFi program
+- Monitoring via dashboard, API, WebSocket stream, and Telegram notifications
 
-- Programmatic wallet creation (`Keypair.generate`)
-- Encrypted keystore at rest (AES-256-GCM)
-- Policy-gated automated signing (no manual signing prompts)
-- Devnet-only enforcement (hard fail on mainnet)
-- Multi-agent runner with concurrency controls
-- Mock Anchor DeFi program with PDA authority and 1:1 swaps
-- Fastify API + WebSocket event stream
-- Minimal Next.js dashboard
+## Live Deployment
+
+- Frontend: `https://autarchdistrict.vercel.app` (update if changed)
+- Backend API: `https://autarchdistrict.onrender.com`
+- Health check: `https://autarchdistrict.onrender.com/health`
+
+## Quick Demo Flow (For Judges)
+
+1. Open the frontend and go to `/app`.
+2. Click `Create Agents` to provision wallets.
+3. Click `Fund/Setup Demo` to mint tokens, seed balances, and initialize pool state.
+4. Click `Run Demo` to execute autonomous swaps.
+5. Review:
+   - Agent state updates
+   - Transaction log entries
+   - Optional Telegram alerts
+6. Click `Stop Demo`.
+
+## Requirement Mapping (Hackathon)
+
+1. Create wallet programmatically: `apps/backend/src/keystore/keystore.ts`
+2. Sign automatically: `apps/backend/src/wallet/txBuilder.ts`
+3. Hold SOL/SPL: `apps/backend/src/routes/demo.ts`
+4. Interact with test protocol: `apps/backend/src/protocol/mockDefiClient.ts` + `programs/agent_mock_defi`
+5. Deep dive: `DEEP_DIVE.md`
+6. Open-source with setup docs: this `README.md`
+7. `SKILLS.md` included for agents
+8. Devnet-only enforcement: `apps/backend/src/config.ts`
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   subgraph FE[Frontend]
-    UI[Next.js Dashboard]
+    UI[Next.js App]
   end
 
   subgraph BE[Backend]
-    API[Fastify REST + WS]
-    AR[Agent Runner]
-    WS[Wallet Service]
-    KS[Encrypted Keystore]
-    POL[Policy Gate]
+    API[Fastify REST]
+    WS[WebSocket Stream]
+    RUN[Agent Runner]
+    WAL[Wallet Executor]
+    KEY[Encrypted Keystore]
+    POL[Policy Engine]
+    TEL[Telegram Notifier]
   end
 
   subgraph CHAIN[Solana Devnet]
-    DAPP[Anchor Mock DeFi]
-    SPL[SPL Token]
+    PROG[Anchor Mock DeFi Program]
+    SPL[SPL Token Program]
     SYS[System Program]
   end
 
   UI --> API
-  API --> AR
-  AR --> WS
-  WS --> KS
-  WS --> POL
-  WS --> CHAIN
+  UI --> WS
+  API --> RUN
+  RUN --> WAL
+  WAL --> KEY
+  WAL --> POL
+  WAL --> CHAIN
+  RUN --> TEL
 ```
 
-## Prerequisites
+## Local Development
 
-- Node.js >= 20
-- pnpm >= 10
+### Prerequisites
+
+- Node.js 20+
+- pnpm 10+
 - Solana CLI
 - Anchor CLI
 - Rust toolchain
 
-## Setup
+### Setup
 
-1. `solana config set -ud`
-2. `solana-keygen new`
-3. `solana airdrop 2`
-4. `pnpm install`
-5. `Copy .env.example to .env`
-6. Set `KEYSTORE_MASTER_KEY` to a strong random value
-7. `pnpm anchor:build`
-8. `pnpm anchor:test`
-9. `pnpm anchor:deploy:devnet`
-10. Set deployed `PROGRAM_ID` in `.env`
-11. `pnpm dev`
+1. Install dependencies:
+```bash
+corepack pnpm install
+```
+2. Copy env:
+```bash
+cp .env.example .env
+cp apps/web/.env.example apps/web/.env.local
+```
+3. Set required secrets in `.env`:
+   - `KEYSTORE_MASTER_KEY`
+   - `PROGRAM_ID`
+4. Ensure Solana devnet:
+```bash
+solana config set --url https://api.devnet.solana.com
+```
+5. Build and deploy Anchor program (devnet):
+```bash
+pnpm anchor:build
+pnpm anchor:deploy:devnet
+```
+6. Run app:
+```bash
+pnpm dev
+```
 
-## Demo
+Backend: `http://localhost:3001`  
+Frontend: `http://localhost:3000`
 
-1. `pnpm anchor:deploy:devnet`
-2. `pnpm demo:devnet`
-3. Optional API flow:
-4. `POST /demo/setup` (creates mints, ATAs, seeds balances, tries pool init)
-5. `POST /demo/run` (fixed swap rounds and returns signatures)
-6. `POST /demo/stop`
+## API Endpoints
 
-The backend exposes:
-
-- `POST /agents`
+- `GET /health`
 - `GET /agents`
+- `POST /agents`
 - `POST /demo/setup`
 - `POST /demo/run`
 - `POST /demo/stop`
 
+## Environment Variables
+
+See `.env.example`. Key fields:
+- `SOLANA_RPC_URL`, `SOLANA_WS_URL` (devnet)
+- `KEYSTORE_MASTER_KEY`
+- `PROGRAM_ID`
+- `DATA_DIR` (persistent directory on cloud)
+- `WEB_ORIGIN`
+- `TELEGRAM_*` (optional alerts)
+
+## Cloud Deployment Notes
+
+### Backend (Render)
+
+- Use a persistent disk and set:
+  - `DATA_DIR=/var/data/autarch-data`
+- Set `SOLANA_KEYPAIR_PATH` to mounted secret file path for funded signer.
+- Keep devnet RPC and program id configured.
+
+### Frontend (Vercel)
+
+Frontend uses a Next.js proxy route (`/api/backend/[...path]`) to forward API requests to backend, reducing browser CORS issues.
+
 ## Security Notes
 
-- Solana keypair files are plaintext by default; this project encrypts secret key bytes at rest.
-- Keys are decrypted only in memory for signing.
-- Policy layer blocks disallowed programs and overspend.
-- Devnet-only guard prevents accidental mainnet usage.
-
-## Troubleshooting
-
-- Blockhash expired: retry path in wallet confirmation refreshes blockhash and resubmits within retry budget.
-- Airdrop limited: wait and retry with smaller requests.
-- Missing ATA: wallet helper creates ATA and retries.
-- Tx not confirmed: use signature status polling and check expiration.
-- Program ID mismatch: update `PROGRAM_ID` in `.env` after `anchor deploy --provider.cluster devnet`.
-
-## Deploy Checklist
-
-1. `solana config set -ud`
-2. `solana airdrop 2`
-3. `anchor deploy --provider.cluster devnet`
-4. Update `.env` `PROGRAM_ID`
-5. `pnpm demo:devnet`
+- Secrets are never hardcoded in source.
+- Keystore stores encrypted secret keys (AES-256-GCM) at rest.
+- Policy layer enforces program allowlist and spend controls.
+- Devnet-only guard blocks non-devnet RPC usage.
 
 ## Repository Layout
 
-- `apps/backend` Fastify API, keystore, wallet, runner, tests
-- `apps/web` Next.js dashboard
-- `programs/agent_mock_defi` Anchor program and tests
-
-## Scripts
-
-- `pnpm dev`
-- `pnpm lint`
-- `pnpm test`
-- `pnpm anchor:build`
-- `pnpm anchor:test`
-- `pnpm anchor:deploy:devnet`
-- `pnpm demo:devnet`
+- `apps/backend`: API, wallet engine, keystore, policies, agent runner
+- `apps/web`: landing page + dashboard UI
+- `programs/agent_mock_defi`: Anchor mock DeFi program
+- `DEEP_DIVE.md`: design and security deep dive
+- `SKILLS.md`: runtime guidance for agents

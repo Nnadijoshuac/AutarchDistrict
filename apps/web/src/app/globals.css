@@ -265,6 +265,17 @@ a {
   padding: 10px 12px;
   font-size: 14px;
   border: 1px solid transparent;
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.status-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.status-hide {
+  opacity: 0;
+  transform: translateY(-3px);
 }
 
 .status-ok {
