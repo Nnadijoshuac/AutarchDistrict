@@ -48,14 +48,25 @@ async function parseApiError(res: Response): Promise<Error> {
   }
 }
 
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Network request failed (${reason}). Check NEXT_PUBLIC_API_BASE (${API_BASE}) and backend CORS WEB_ORIGIN.`
+    );
+  }
+}
+
 export async function listAgents(): Promise<Agent[]> {
-  const res = await fetch(`${API_BASE}/agents`, { cache: "no-store" });
+  const res = await apiFetch(`${API_BASE}/agents`, { cache: "no-store" });
   const body = (await res.json()) as { agents: Agent[] };
   return body.agents;
 }
 
 export async function createAgents(count: number): Promise<Agent[]> {
-  const res = await fetch(`${API_BASE}/agents`, {
+  const res = await apiFetch(`${API_BASE}/agents`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ count })
@@ -65,7 +76,7 @@ export async function createAgents(count: number): Promise<Agent[]> {
 }
 
 export async function setupDemo(payload: DemoSetupPayload = {}): Promise<DemoSetupResponse> {
-  const res = await fetch(`${API_BASE}/demo/setup`, {
+  const res = await apiFetch(`${API_BASE}/demo/setup`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload)
@@ -77,7 +88,7 @@ export async function setupDemo(payload: DemoSetupPayload = {}): Promise<DemoSet
 }
 
 export async function runDemo(rounds = 3, amount = 1000): Promise<DemoRunResponse> {
-  const res = await fetch(`${API_BASE}/demo/run`, {
+  const res = await apiFetch(`${API_BASE}/demo/run`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ rounds, amount })
@@ -89,7 +100,7 @@ export async function runDemo(rounds = 3, amount = 1000): Promise<DemoRunRespons
 }
 
 export async function stopDemo(): Promise<DemoStopResponse> {
-  const res = await fetch(`${API_BASE}/demo/stop`, {
+  const res = await apiFetch(`${API_BASE}/demo/stop`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({})
