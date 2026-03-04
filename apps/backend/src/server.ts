@@ -53,8 +53,27 @@ export async function buildServer() {
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
   const agentStore = new AgentStore();
   const kmsProvider = new DevKmsProvider(config.KMS_MASTER_KEY_BASE64);
-  const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), kmsProvider);
-  const spendDb = new SpendDb(join(config.DATA_DIR, "spend-db.json"));
+  const primaryDataDir = config.DATA_DIR;
+  let activeDataDir = primaryDataDir;
+  let keystore: FileKeystore;
+  let spendDb: SpendDb;
+  try {
+    keystore = new FileKeystore(join(primaryDataDir, "keystore.json"), kmsProvider);
+    spendDb = new SpendDb(join(primaryDataDir, "spend-db.json"));
+  } catch (error) {
+    const code = (error as { code?: string } | undefined)?.code;
+    if (code !== "EACCES" && code !== "EPERM") {
+      throw error;
+    }
+    activeDataDir = "/tmp/autarch-data";
+    app.log.warn(
+      { configuredDataDir: primaryDataDir, fallbackDataDir: activeDataDir, error: String(error) },
+      "DATA_DIR is not writable; falling back to /tmp storage."
+    );
+    keystore = new FileKeystore(join(activeDataDir, "keystore.json"), kmsProvider);
+    spendDb = new SpendDb(join(activeDataDir, "spend-db.json"));
+  }
+  app.log.info({ activeDataDir }, "Backend local data directory initialized.");
   const signerProvider = new LocalEncryptedKeystoreSignerProvider(keystore);
   const baseAllowedPrograms = [
     SYSTEM_PROGRAM_ID.toBase58(),
