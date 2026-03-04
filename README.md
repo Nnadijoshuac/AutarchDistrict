@@ -1,4 +1,5 @@
 # Autarch District - Agentic Wallets for AI Agents (Solana Devnet)
+[![CI](https://github.com/Nnadijoshuac/AutarchDistrict/actions/workflows/ci.yml/badge.svg)](https://github.com/Nnadijoshuac/AutarchDistrict/actions/workflows/ci.yml)
 
 Autarch District is a prototype control plane for autonomous AI-agent wallets on Solana devnet.
 

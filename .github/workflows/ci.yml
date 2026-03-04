@@ -1,28 +1,40 @@
-name: ci
+name: CI
 
 on:
-  pull_request:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 jobs:
-  test:
+  build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.0
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
       - name: Lint
         run: pnpm lint
-      - name: Unit tests
+
+      - name: Test
         run: pnpm test
-      - name: Anchor tests (optional)
-        run: pnpm anchor:test
-        continue-on-error: true
+
+      - name: Build backend
+        run: pnpm --filter backend build
+
+      - name: Build web
+        run: pnpm --filter web build
