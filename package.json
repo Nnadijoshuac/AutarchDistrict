@@ -7,13 +7,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "lint": "pnpm -r lint",
-    "test": "pnpm --filter backend test",
+    "dev": "corepack pnpm -r --parallel dev",
+    "lint": "corepack pnpm -r lint",
+    "test": "corepack pnpm --filter backend test",
     "anchor:build": "anchor build --provider.cluster localnet --provider.wallet ~/.config/solana/id.json",
     "anchor:test": "anchor test --skip-build",
     "anchor:deploy:devnet": "anchor deploy --provider.cluster devnet",
-    "demo:devnet": "pnpm --filter backend demo:devnet"
+    "demo:devnet": "corepack pnpm --filter backend demo:devnet"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
