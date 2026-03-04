@@ -5,6 +5,8 @@ import { PublicKey } from "@solana/web3.js";
 import type { WalletExecutor } from "../wallet/txBuilder.js";
 import type { AgentState, AgentStrategy } from "./types.js";
 import type { MockDefiClient } from "../protocol/mockDefiClient.js";
+import type { PolicyProfile } from "../policy/policyProfile.js";
+import { PolicyViolationError } from "../policy/txPolicyEngine.js";
 
 export type RunnerEvent = {
   timestamp: string;
@@ -25,6 +27,7 @@ export class AgentRunner extends EventEmitter {
     private readonly wallet: WalletExecutor,
     private readonly protocol: MockDefiClient,
     private readonly strategyFactory: (agentId: string) => AgentStrategy,
+    private readonly profileFactory: (agentId: string) => PolicyProfile,
     maxRpcPerSecond = 10,
     maxConcurrentAgents = 5
   ) {
@@ -41,6 +44,7 @@ export class AgentRunner extends EventEmitter {
         agentId: signer.agentId,
         publicKey: signer.publicKey,
         strategy: this.strategyFactory(signer.agentId).name,
+        policyProfile: this.profileFactory(signer.agentId),
         lastStatus: "idle"
       };
       this.agents.set(signer.agentId, state);
@@ -59,6 +63,7 @@ export class AgentRunner extends EventEmitter {
         agentId: signer.agentId,
         publicKey: signer.publicKey,
         strategy: this.strategyFactory(signer.agentId).name,
+        policyProfile: this.profileFactory(signer.agentId),
         lastStatus: "idle"
       };
       this.agents.set(signer.agentId, state);
@@ -69,6 +74,10 @@ export class AgentRunner extends EventEmitter {
 
   listAgents(): AgentState[] {
     return [...this.agents.values()];
+  }
+
+  getAgent(agentId: string): AgentState | undefined {
+    return this.agents.get(agentId);
   }
 
   start(intervalMs = 3000): void {
@@ -114,7 +123,7 @@ export class AgentRunner extends EventEmitter {
           action.direction,
           action.amount
         );
-        return this.wallet.submitSwap(agentId, ix, action.amount);
+        return this.wallet.submitSwap(agentId, ix, action.amount, state.policyProfile);
       });
 
       state.lastSignature = signature;
@@ -128,7 +137,12 @@ export class AgentRunner extends EventEmitter {
         signature
       } satisfies RunnerEvent);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message =
+        error instanceof PolicyViolationError
+          ? JSON.stringify(error.detail)
+          : error instanceof Error
+            ? error.message
+            : String(error);
       state.lastStatus = "error";
       state.lastError = message;
       this.emit("event", {

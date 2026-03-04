@@ -16,6 +16,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { Notifier } from "../notifications/notifier.js";
+import { PolicyViolationError } from "../policy/txPolicyEngine.js";
 
 type DemoContext = {
   runner: AgentRunner;
@@ -231,9 +232,13 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
           const sig = await ctx.wallet.submitSwap(agent.agentId, ix, amount);
           signatures.push(sig);
         } catch (err) {
+          const detail =
+            err instanceof PolicyViolationError
+              ? err.detail
+              : { code: "UNKNOWN", message: err instanceof Error ? err.message : String(err), agentId: agent.agentId };
           errors.push({
             agentId: agent.agentId,
-            err: err instanceof Error ? err.message : String(err)
+            err: JSON.stringify(detail)
           });
         }
       }

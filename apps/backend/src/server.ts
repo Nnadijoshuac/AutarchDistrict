@@ -10,15 +10,22 @@ import { createConnection } from "./solana/connection.js";
 import { DevKmsProvider } from "./security/devKmsProvider.js";
 import { FileKeystore } from "./security/keystore.js";
 import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
-import { TxPolicyEngine } from "./wallet/txPolicy.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
 import { MockDefiClient } from "./protocol/mockDefiClient.js";
 import { AgentRunner } from "./agents/agentRunner.js";
 import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { registerAgentRoutes } from "./routes/agents.js";
 import { registerDemoRoutes } from "./routes/demo.js";
+import { SANDBOX_PROFILE, type PolicyProfile } from "./policy/policyProfile.js";
 import { SpendDb } from "./policy/spendDb.js";
+import { TxPolicyEngine } from "./policy/txPolicyEngine.js";
 import { createTelegramNotifier } from "./notifications/telegram.js";
+import {
+  ATA_PROGRAM_ID,
+  COMPUTE_BUDGET_PROGRAM_ID,
+  SPL_TOKEN_PROGRAM_ID,
+  SYSTEM_PROGRAM_ID
+} from "./solana/constants.js";
 
 export async function buildServer() {
   const config = loadConfig();
@@ -37,14 +44,27 @@ export async function buildServer() {
   const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), kmsProvider);
   const spendDb = new SpendDb(join(config.DATA_DIR, "spend-db.json"));
   const signerProvider = new LocalEncryptedKeystoreSignerProvider(keystore);
-  const policy = new TxPolicyEngine(config.PROGRAM_ID, {
-    maxLamportsPerTransfer: 2_000_000_000,
-    maxTokenAmountPerSwap: config.DEMO_SWAP_AMOUNT,
-    maxDailyVolume: config.DEMO_SWAP_AMOUNT * 100
-  }, spendDb);
+  const baseAllowedPrograms = [
+    SYSTEM_PROGRAM_ID.toBase58(),
+    SPL_TOKEN_PROGRAM_ID.toBase58(),
+    ATA_PROGRAM_ID.toBase58(),
+    COMPUTE_BUDGET_PROGRAM_ID.toBase58(),
+    config.PROGRAM_ID
+  ];
+  const buildAgentPolicyProfile = (_agentId: string): PolicyProfile => ({
+    ...SANDBOX_PROFILE,
+    allowedPrograms: baseAllowedPrograms
+  });
+
+  const policy = new TxPolicyEngine(spendDb);
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(new PublicKey(config.PROGRAM_ID));
-  const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
+  const runner = new AgentRunner(
+    wallet,
+    protocol,
+    () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT),
+    buildAgentPolicyProfile
+  );
   const restoredAgents = runner.restoreAgents(await keystore.listSigners());
   if (restoredAgents.length > 0) {
     app.log.info({ count: restoredAgents.length }, "Restored agents from keystore.");

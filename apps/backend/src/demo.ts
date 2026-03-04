@@ -4,14 +4,21 @@ import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { AgentRunner } from "./agents/agentRunner.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./observability/logger.js";
+import { SANDBOX_PROFILE, type PolicyProfile } from "./policy/policyProfile.js";
 import { SpendDb } from "./policy/spendDb.js";
+import { TxPolicyEngine } from "./policy/txPolicyEngine.js";
 import { MockDefiClient } from "./protocol/mockDefiClient.js";
 import { DevKmsProvider } from "./security/devKmsProvider.js";
 import { FileKeystore } from "./security/keystore.js";
 import { createConnection } from "./solana/connection.js";
+import {
+  ATA_PROGRAM_ID,
+  COMPUTE_BUDGET_PROGRAM_ID,
+  SPL_TOKEN_PROGRAM_ID,
+  SYSTEM_PROGRAM_ID
+} from "./solana/constants.js";
 import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
-import { TxPolicyEngine } from "./wallet/txPolicy.js";
 
 async function main() {
   const config = loadConfig();
@@ -23,18 +30,27 @@ async function main() {
   const keystore = new FileKeystore("data/keystore.json", kmsProvider);
   const spendDb = new SpendDb("data/spend-db.json");
   const signerProvider = new LocalEncryptedKeystoreSignerProvider(keystore);
-  const policy = new TxPolicyEngine(
-    config.PROGRAM_ID,
-    {
-      maxLamportsPerTransfer: 2_000_000_000,
-      maxTokenAmountPerSwap: config.DEMO_SWAP_AMOUNT,
-      maxDailyVolume: config.DEMO_SWAP_AMOUNT * 100
-    },
-    spendDb
-  );
+  const baseAllowedPrograms = [
+    SYSTEM_PROGRAM_ID.toBase58(),
+    SPL_TOKEN_PROGRAM_ID.toBase58(),
+    ATA_PROGRAM_ID.toBase58(),
+    COMPUTE_BUDGET_PROGRAM_ID.toBase58(),
+    config.PROGRAM_ID
+  ];
+  const buildAgentPolicyProfile = (_agentId: string): PolicyProfile => ({
+    ...SANDBOX_PROFILE,
+    allowedPrograms: baseAllowedPrograms
+  });
+
+  const policy = new TxPolicyEngine(spendDb);
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(programId);
-  const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
+  const runner = new AgentRunner(
+    wallet,
+    protocol,
+    () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT),
+    buildAgentPolicyProfile
+  );
 
   logger.info("Step 1: create admin + agents");
   const admin = await signerProvider.createSigner();
