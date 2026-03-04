@@ -21,6 +21,7 @@ import { SpendDb } from "./policy/spendDb.js";
 import { TxPolicyEngine, type PolicyViolationDetail } from "./policy/txPolicyEngine.js";
 import { createTelegramNotifier } from "./notifications/telegram.js";
 import { AgentStore } from "./persistence/agentStore.js";
+import { ensureDatabaseReady } from "./persistence/db.js";
 import { AppMetrics } from "./metrics.js";
 import {
   ATA_PROGRAM_ID,
@@ -52,6 +53,7 @@ export async function buildServer() {
 
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
   const agentStore = new AgentStore();
+  await ensureDatabaseReady(app.log);
   const kmsProvider = new DevKmsProvider(config.KMS_MASTER_KEY_BASE64);
   const primaryDataDir = config.DATA_DIR;
   let activeDataDir = primaryDataDir;
@@ -330,7 +332,7 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   void main();
 }
 
-const vercelServerPromise = buildServer();
+const vercelServerPromise = process.env.VERCEL ? buildServer() : null;
 
 async function readBody(req: IncomingMessage): Promise<Buffer | undefined> {
   if (req.method === "GET" || req.method === "HEAD") {
@@ -348,6 +350,9 @@ async function readBody(req: IncomingMessage): Promise<Buffer | undefined> {
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
+    if (!vercelServerPromise) {
+      throw new Error("Vercel handler is only available in VERCEL runtime.");
+    }
     const { app } = await vercelServerPromise;
     const payload = await readBody(req);
     const injectPromise = app.inject({
