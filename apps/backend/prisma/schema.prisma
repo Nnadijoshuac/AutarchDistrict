@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id               String   @id @default(uuid())
+  publicKey        String
+  encryptedSecret  String
+  encryptedDataKey String
+  policyProfile    Json
+  isActive         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  transactions     Transaction[]
+  violations       PolicyViolation[]
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  agentId   String
+  signature String?
+  status    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}
+
+model PolicyViolation {
+  id        String   @id @default(uuid())
+  agentId   String
+  code      String
+  message   String
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}

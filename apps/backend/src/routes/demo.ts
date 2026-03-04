@@ -17,6 +17,13 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { Notifier } from "../notifications/notifier.js";
 import { PolicyViolationError } from "../policy/txPolicyEngine.js";
+import { SANDBOX_PROFILE, type PolicyProfile } from "../policy/policyProfile.js";
+import {
+  ATA_PROGRAM_ID,
+  COMPUTE_BUDGET_PROGRAM_ID,
+  SPL_TOKEN_PROGRAM_ID,
+  SYSTEM_PROGRAM_ID
+} from "../solana/constants.js";
 
 type DemoContext = {
   runner: AgentRunner;
@@ -58,6 +65,16 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
   const state: DemoState = { setupInProgress: false, signatures: [] };
   const defaultKeypairPath = join(homedir(), ".config", "solana", "id.json");
   const fundedKeypairPath = process.env.SOLANA_KEYPAIR_PATH ?? defaultKeypairPath;
+  const defaultProfile: PolicyProfile = {
+    ...SANDBOX_PROFILE,
+    allowedPrograms: [
+      SYSTEM_PROGRAM_ID.toBase58(),
+      SPL_TOKEN_PROGRAM_ID.toBase58(),
+      ATA_PROGRAM_ID.toBase58(),
+      COMPUTE_BUDGET_PROGRAM_ID.toBase58(),
+      ctx.programId.toBase58()
+    ]
+  };
 
   function loadFundedSigner(): Keypair {
     const raw = JSON.parse(readFileSync(fundedKeypairPath, "utf8")) as number[];
@@ -134,7 +151,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
         vaultA,
         vaultB
       });
-      const sig = await ctx.wallet.submitInstructions(state.adminAgentId, [initIx]);
+      const sig = await ctx.wallet.submitInstructions(state.adminAgentId, [initIx], undefined, defaultProfile);
       state.signatures.push(sig);
     }
 
@@ -229,7 +246,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
             sourceMint: state.mintA,
             destinationMint: state.mintB
           });
-          const sig = await ctx.wallet.submitSwap(agent.agentId, ix, amount);
+          const sig = await ctx.wallet.submitSwap(agent.agentId, ix, amount, agent.policyProfile);
           signatures.push(sig);
         } catch (err) {
           const detail =

@@ -9,7 +9,7 @@ const AES_GCM_ALGO = "aes-256-gcm";
 const IV_SIZE = 12;
 const TAG_SIZE = 16;
 
-type StoredAgentSecret = {
+export type StoredAgentSecret = {
   agentId: string;
   encryptedSecret: string;
   encryptedDataKey: string;
@@ -150,5 +150,14 @@ export class FileKeystore {
     }
 
     return out;
+  }
+
+  getStoredAgent(agentId: string): StoredAgentSecret {
+    const store = this.readStore();
+    const found = store.agents.find((agent) => agent.agentId === agentId);
+    if (!found) {
+      throw new Error(`Signer metadata not found for agentId=${agentId}`);
+    }
+    return found;
   }
 }

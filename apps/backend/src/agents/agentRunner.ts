@@ -17,6 +17,11 @@ export type RunnerEvent = {
   err?: string;
 };
 
+type RunnerHooks = {
+  onAgentCreated?: (state: AgentState) => Promise<void>;
+  onAgentStatusChanged?: (agentId: string, isActive: boolean) => Promise<void>;
+};
+
 export class AgentRunner extends EventEmitter {
   private readonly agents = new Map<string, AgentState>();
   private readonly timers = new Map<string, NodeJS.Timeout>();
@@ -28,6 +33,7 @@ export class AgentRunner extends EventEmitter {
     private readonly protocol: MockDefiClient,
     private readonly strategyFactory: (agentId: string) => AgentStrategy,
     private readonly profileFactory: (agentId: string) => PolicyProfile,
+    private readonly hooks: RunnerHooks = {},
     maxRpcPerSecond = 10,
     maxConcurrentAgents = 5
   ) {
@@ -48,6 +54,9 @@ export class AgentRunner extends EventEmitter {
         lastStatus: "idle"
       };
       this.agents.set(signer.agentId, state);
+      if (this.hooks.onAgentCreated) {
+        await this.hooks.onAgentCreated(state);
+      }
       created.push(state);
     }
     return created;
@@ -80,17 +89,25 @@ export class AgentRunner extends EventEmitter {
     return this.agents.get(agentId);
   }
 
+  resumeActiveRunners(activeAgentIds: string[], intervalMs = 3000): void {
+    if (activeAgentIds.length === 0) {
+      return;
+    }
+    const enabled = new Set(activeAgentIds);
+    for (const state of this.agents.values()) {
+      if (!enabled.has(state.agentId) || this.timers.has(state.agentId)) {
+        continue;
+      }
+      this.startAgent(state, intervalMs);
+    }
+  }
+
   start(intervalMs = 3000): void {
     for (const state of this.agents.values()) {
       if (this.timers.has(state.agentId)) {
         continue;
       }
-      state.lastStatus = "running";
-      const strategy = this.strategyFactory(state.agentId);
-      const timer = setInterval(() => {
-        void this.actionLimit(() => this.runTick(state.agentId, strategy));
-      }, intervalMs);
-      this.timers.set(state.agentId, timer);
+      this.startAgent(state, intervalMs);
     }
   }
 
@@ -102,7 +119,18 @@ export class AgentRunner extends EventEmitter {
       if (state) {
         state.lastStatus = "stopped";
       }
+      void this.hooks.onAgentStatusChanged?.(agentId, false).catch(() => undefined);
     }
+  }
+
+  private startAgent(state: AgentState, intervalMs: number): void {
+    state.lastStatus = "running";
+    const strategy = this.strategyFactory(state.agentId);
+    const timer = setInterval(() => {
+      void this.actionLimit(() => this.runTick(state.agentId, strategy));
+    }, intervalMs);
+    this.timers.set(state.agentId, timer);
+    void this.hooks.onAgentStatusChanged?.(state.agentId, true).catch(() => undefined);
   }
 
   private async runTick(agentId: string, strategy: AgentStrategy): Promise<void> {

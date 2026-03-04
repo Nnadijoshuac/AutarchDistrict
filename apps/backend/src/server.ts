@@ -18,8 +18,9 @@ import { registerAgentRoutes } from "./routes/agents.js";
 import { registerDemoRoutes } from "./routes/demo.js";
 import { SANDBOX_PROFILE, type PolicyProfile } from "./policy/policyProfile.js";
 import { SpendDb } from "./policy/spendDb.js";
-import { TxPolicyEngine } from "./policy/txPolicyEngine.js";
+import { TxPolicyEngine, type PolicyViolationDetail } from "./policy/txPolicyEngine.js";
 import { createTelegramNotifier } from "./notifications/telegram.js";
+import { AgentStore } from "./persistence/agentStore.js";
 import {
   ATA_PROGRAM_ID,
   COMPUTE_BUDGET_PROGRAM_ID,
@@ -31,15 +32,13 @@ export async function buildServer() {
   const config = loadConfig();
   const app = Fastify({ logger: { level: config.LOG_LEVEL } });
   const notifier = createTelegramNotifier(config, app.log);
-  // Hackathon-safe default: allow cross-origin browser requests so hosted
-  // frontends (Vercel/Render previews) can call the API without CORS mismatch.
-  // You can tighten this later with explicit origin allowlists.
   await app.register(cors, { origin: true });
   if (!process.env.VERCEL) {
     await app.register(websocket);
   }
 
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
+  const agentStore = new AgentStore();
   const kmsProvider = new DevKmsProvider(config.KMS_MASTER_KEY_BASE64);
   const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), kmsProvider);
   const spendDb = new SpendDb(join(config.DATA_DIR, "spend-db.json"));
@@ -63,11 +62,40 @@ export async function buildServer() {
     wallet,
     protocol,
     () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT),
-    buildAgentPolicyProfile
+    buildAgentPolicyProfile,
+    {
+      onAgentCreated: async (state) => {
+        const secret = keystore.getStoredAgent(state.agentId);
+        await agentStore.upsertAgent(state, {
+          encryptedSecret: secret.encryptedSecret,
+          encryptedDataKey: secret.encryptedDataKey
+        });
+      },
+      onAgentStatusChanged: async (agentId, isActive) => {
+        await agentStore.setAgentActive(agentId, isActive);
+      }
+    }
   );
-  const restoredAgents = runner.restoreAgents(await keystore.listSigners());
-  if (restoredAgents.length > 0) {
-    app.log.info({ count: restoredAgents.length }, "Restored agents from keystore.");
+
+  const persistedAgents = await agentStore.listAgents();
+  if (persistedAgents.length > 0) {
+    const restoredAgents = runner.restoreAgents(
+      persistedAgents.map((agent) => ({ agentId: agent.agentId, publicKey: agent.publicKey }))
+    );
+    runner.resumeActiveRunners(persistedAgents.filter((agent) => agent.isActive).map((agent) => agent.agentId));
+    app.log.info({ count: restoredAgents.length }, "Restored agents from database.");
+  } else {
+    const restoredAgents = runner.restoreAgents(await keystore.listSigners());
+    if (restoredAgents.length > 0) {
+      for (const state of restoredAgents) {
+        const secret = keystore.getStoredAgent(state.agentId);
+        await agentStore.upsertAgent(state, {
+          encryptedSecret: secret.encryptedSecret,
+          encryptedDataKey: secret.encryptedDataKey
+        });
+      }
+      app.log.info({ count: restoredAgents.length }, "Restored agents from keystore.");
+    }
   }
 
   const sockets = new Set<{ send: (msg: string) => void }>();
@@ -87,6 +115,25 @@ export async function buildServer() {
     for (const ws of sockets) {
       ws.send(serialized);
     }
+
+    void agentStore.recordTransaction({
+      agentId: evt.agentId,
+      status: evt.status,
+      signature: evt.signature,
+      reason: evt.err
+    });
+
+    if (evt.err) {
+      try {
+        const parsed = JSON.parse(evt.err) as PolicyViolationDetail;
+        if (parsed.code?.startsWith("DENY_")) {
+          void agentStore.recordPolicyViolation(parsed);
+        }
+      } catch {
+        // ignore non-policy errors
+      }
+    }
+
     if (config.TELEGRAM_NOTIFY_AGENT_EVENTS) {
       const line = `Autarch District\nAgent: ${evt.agentId}\nAction: ${evt.action}\nStatus: ${evt.status}${
         evt.signature ? `\nSig: ${evt.signature}` : ""
@@ -106,6 +153,7 @@ export async function buildServer() {
     demoSwapAmount: config.DEMO_SWAP_AMOUNT,
     notifier
   });
+  app.get("/policy-violations", async () => ({ violations: await agentStore.listPolicyViolations(200) }));
   app.get("/health", async () => ({ ok: true }));
 
   await app.ready();
@@ -122,8 +170,6 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   void main();
 }
 
-// Vercel serverless entrypoint expects a default function export.
-// We reuse one lazily-initialized Fastify instance across invocations.
 const vercelServerPromise = buildServer();
 
 async function readBody(req: IncomingMessage): Promise<Buffer | undefined> {
