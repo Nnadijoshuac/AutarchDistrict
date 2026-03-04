@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RandomSwapStrategy } from "../src/agents/strategies/randomSwap.js";
+import { SANDBOX_PROFILE } from "../src/policy/policyProfile.js";
 
 describe("agent runner strategy", () => {
   it("generates swap action", () => {
@@ -8,6 +9,7 @@ describe("agent runner strategy", () => {
       agentId: "a",
       publicKey: "p",
       strategy: "randomSwap",
+      policyProfile: SANDBOX_PROFILE,
       lastStatus: "idle"
     });
 

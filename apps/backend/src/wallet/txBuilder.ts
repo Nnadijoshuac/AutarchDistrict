@@ -6,8 +6,10 @@ import {
   type Connection,
   type SendOptions
 } from "@solana/web3.js";
+import type { PolicyProfile } from "../policy/policyProfile.js";
+import { SANDBOX_PROFILE } from "../policy/policyProfile.js";
+import { TxPolicyEngine } from "../policy/txPolicyEngine.js";
 import type { SignerProvider } from "./signer.js";
-import { TxPolicyEngine } from "./txPolicy.js";
 import { sendWithRetry } from "./confirm.js";
 
 export class WalletExecutor {
@@ -20,9 +22,12 @@ export class WalletExecutor {
   async submitInstructions(
     agentId: string,
     instructions: TransactionInstruction[],
-    options?: SendOptions
+    options?: SendOptions,
+    profile: PolicyProfile = SANDBOX_PROFILE,
+    lamports = 0,
+    slippageBps = 0
   ): Promise<string> {
-    this.policy.assertProgramAllowlist(instructions);
+    this.policy.assertTransaction({ instructions, lamports, slippageBps }, agentId, profile);
 
     const signer = await this.signerProvider.getSigner(agentId);
     const payer = signer.publicKey;
@@ -48,20 +53,28 @@ export class WalletExecutor {
     return sendWithRetry(this.connection, txBuilder, options);
   }
 
-  async transferSol(agentId: string, to: PublicKey, lamports: number): Promise<string> {
-    this.policy.assertLamports(agentId, lamports);
+  async transferSol(
+    agentId: string,
+    to: PublicKey,
+    lamports: number,
+    profile: PolicyProfile = SANDBOX_PROFILE
+  ): Promise<string> {
     const from = (await this.signerProvider.getSigner(agentId)).publicKey;
     const ix = SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports });
-    return this.submitInstructions(agentId, [ix]);
+    return this.submitInstructions(agentId, [ix], undefined, profile, lamports, 0);
   }
 
   async createAgent(): Promise<{ agentId: string; publicKey: string }> {
     return await this.signerProvider.createSigner();
   }
 
-  async submitSwap(agentId: string, instruction: TransactionInstruction, amount: number): Promise<string> {
-    this.policy.assertSwapAmount(agentId, amount);
-    return this.submitInstructions(agentId, [instruction]);
+  async submitSwap(
+    agentId: string,
+    instruction: TransactionInstruction,
+    amount: number,
+    profile: PolicyProfile = SANDBOX_PROFILE
+  ): Promise<string> {
+    return this.submitInstructions(agentId, [instruction], undefined, profile, amount, 0);
   }
 
   async listAgents(): Promise<Array<{ agentId: string; publicKey: string; createdAt: string }>> {
