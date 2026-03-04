@@ -838,10 +838,8 @@ button:focus-visible {
 }
 
 .stack-back {
-  transform: translate(
-    calc(20px + var(--hero-parallax-back-x, 0px)),
-    calc(10px + var(--hero-parallax-back-y, 0px))
-  );
+  transform: translate(calc(20px + var(--hero-parallax-back-x, 0px)),
+      calc(10px + var(--hero-parallax-back-y, 0px)));
   z-index: 1;
   transition: transform 180ms ease-out;
 }
@@ -850,10 +848,27 @@ button:focus-visible {
   z-index: 2;
 }
 
+.overview-section {
+  margin-top: 132px;
+}
+
+.overview-header {
+  max-width: 760px;
+}
+
+.overview-header h2 {
+  margin: 10px 0 0;
+  color: #141414;
+  font-family: var(--font-display), serif;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.5rem, 2.7vw, 2.15rem);
+}
+
 .minimal-strip {
-  margin-top: 78px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  margin-top: 28px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .minimal-pill {
@@ -865,6 +880,19 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.72);
   padding: 14px 14px;
   box-shadow: 0 6px 18px rgba(20, 20, 20, 0.04);
+  min-height: 118px;
+}
+
+.minimal-pill-bento.minimal-pill-1 {
+  grid-column: span 1;
+  min-height: 132px;
+}
+
+.minimal-pill-bento.minimal-pill-2,
+.minimal-pill-bento.minimal-pill-3,
+.minimal-pill-bento.minimal-pill-4 {
+  grid-column: span 1;
+  min-height: 132px;
 }
 
 .minimal-pill-icon {
@@ -878,7 +906,7 @@ button:focus-visible {
   fill: currentColor;
 }
 
-.minimal-pill h2 {
+.minimal-pill h3 {
   margin: 0;
   font-size: 0.92rem;
   font-weight: 600;
@@ -890,6 +918,197 @@ button:focus-visible {
   margin: 4px 0 0;
   font-size: 0.8rem;
   line-height: 1.45;
+  color: #5b5b5b;
+}
+
+.edge-section {
+  margin-top: 112px;
+}
+
+.edge-header {
+  max-width: 760px;
+}
+
+.edge-kicker {
+  margin: 0;
+  color: #ff6a00;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.edge-header h2 {
+  margin: 10px 0 0;
+  color: #141414;
+  font-family: var(--font-display), serif;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.55rem, 2.8vw, 2.2rem);
+}
+
+.edge-grid {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.edge-card {
+  border-radius: 16px;
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 16px 16px;
+  box-shadow: 0 8px 20px rgba(20, 20, 20, 0.05);
+  min-height: 168px;
+}
+
+.edge-card-bento.edge-card-1 {
+  grid-column: span 3;
+}
+
+.edge-card-bento.edge-card-2 {
+  grid-column: span 3;
+}
+
+.edge-card-bento.edge-card-3 {
+  grid-column: span 6;
+  min-height: 146px;
+}
+
+.edge-card h3 {
+  margin: 0;
+  color: #141414;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.edge-card p {
+  margin: 8px 0 0;
+  color: #5b5b5b;
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.landing-cta {
+  margin-top: 112px;
+}
+
+.landing-cta-card {
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: clamp(36px, 6vw, 72px) clamp(18px, 4vw, 28px);
+  min-height: clamp(260px, 34vh, 360px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.landing-cta-card h3 {
+  margin: 8px 0 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.landing-cta-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.powered-by {
+  margin-top: 84px;
+  display: flex;
+  justify-content: center;
+}
+
+.powered-block {
+  width: min(760px, 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.86), rgba(255, 245, 235, 0.9));
+  box-shadow: 0 10px 30px rgba(20, 20, 20, 0.05);
+  padding: clamp(22px, 4vw, 34px);
+  text-align: center;
+}
+
+.powered-block h3 {
+  margin: 10px 0 0;
+  font-family: var(--font-display), serif;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.45rem, 2.6vw, 2rem);
+  color: #141414;
+}
+
+.powered-block p {
+  margin: 10px auto 0;
+  max-width: 52ch;
+  color: #5b5b5b;
+  line-height: 1.55;
+}
+
+.powered-chip {
+  margin: 16px auto 0;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 106, 0, 0.3);
+  background: rgba(255, 106, 0, 0.08);
+  color: #a84a00;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 10px 16px;
+}
+
+.landing-footer {
+  position: relative;
+  margin-top: 58px;
+  padding: 48px 24px 54px;
+  min-height: 220px;
+  border-top: 1px solid rgba(20, 20, 20, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  color: #5b5b5b;
+  font-size: 0.9rem;
+}
+
+.landing-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/autarchfooterlogo.png");
+  background-repeat: no-repeat;
+  background-position: center 50%;
+  background-size: 70% auto;
+  opacity: 0.09;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-footer p {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-footer-links {
+  display: inline-flex;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-footer-links a {
   color: #5b5b5b;
 }
 
@@ -916,7 +1135,43 @@ button:focus-visible {
 
   .minimal-strip {
     grid-template-columns: 1fr 1fr;
-    margin-top: 56px;
+    margin-top: 22px;
+  }
+
+  .minimal-pill-bento.minimal-pill-2,
+  .minimal-pill-bento.minimal-pill-3,
+  .minimal-pill-bento.minimal-pill-4 {
+    grid-column: span 1;
+  }
+
+  .edge-section {
+    margin-top: 82px;
+  }
+
+  .edge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .edge-card-bento.edge-card-1,
+  .edge-card-bento.edge-card-2 {
+    grid-column: span 1;
+  }
+
+  .edge-card-bento.edge-card-3 {
+    grid-column: span 2;
+  }
+
+  .landing-cta-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .landing-cta {
+    margin-top: 72px;
+  }
+
+  .powered-by {
+    margin-top: 52px;
   }
 }
 
@@ -984,7 +1239,76 @@ button:focus-visible {
 
   .minimal-strip {
     grid-template-columns: 1fr;
-    margin-top: 44px;
+    margin-top: 18px;
+  }
+
+  .minimal-pill-bento.minimal-pill-1,
+  .minimal-pill-bento.minimal-pill-2,
+  .minimal-pill-bento.minimal-pill-3,
+  .minimal-pill-bento.minimal-pill-4 {
+    grid-column: span 1;
+  }
+
+  .edge-section {
+    margin-top: 50px;
+  }
+
+  .overview-section {
+    margin-top: 68px;
+  }
+
+  .edge-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edge-card-bento.edge-card-1,
+  .edge-card-bento.edge-card-2,
+  .edge-card-bento.edge-card-3 {
+    grid-column: span 1;
+    min-height: auto;
+  }
+
+  .landing-cta-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .landing-cta {
+    margin-top: 56px;
+  }
+
+  .powered-by {
+    margin-top: 38px;
+  }
+
+  .landing-footer {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    min-height: 170px;
+    padding: 24px 16px 8px;
+    text-align: center;
+  }
+
+  .landing-footer::before {
+    background-position: center 60%;
+    background-size: 96% auto;
+    opacity: 0.16;
+  }
+
+  .landing-footer p {
+    margin-top: 0;
+    max-width: 32ch;
+    line-height: 1.45;
+  }
+
+  .landing-footer-links {
+    width: 100%;
+    margin-top: 0;
+    justify-content: center;
+    gap: 18px;
   }
 }
 
@@ -1023,12 +1347,12 @@ button:focus-visible {
 
 .minimal-hero-shell .minimal-copy {
   max-width: 640px;
-  padding-right: clamp(0px, 30vw, 360px);
+  padding-right: clamp(0px, 22vw, 260px);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  margin-top: -22px;
+  margin-top: 70px;
 }
 
 .minimal-hero-shell .minimal-copy h1 {
@@ -1040,9 +1364,10 @@ button:focus-visible {
 }
 
 .minimal-hero-shell .minimal-subtext {
-  max-width: 50ch;
+  max-width: 72ch;
   margin-top: 18px;
   line-height: 1.62;
+  text-wrap: pretty;
 }
 
 .minimal-hero-shell .minimal-actions {
@@ -1101,15 +1426,19 @@ button:focus-visible {
   0% {
     opacity: 0;
   }
+
   18% {
     opacity: 1;
   }
+
   30% {
     opacity: 0.72;
   }
+
   42% {
     opacity: 1;
   }
+
   100% {
     opacity: 1;
   }

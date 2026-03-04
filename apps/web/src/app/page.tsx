@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -71,8 +71,8 @@ export default function LandingPage() {
 
   const features = [
     {
-      title: "Programmatic Wallets",
-      description: "Create isolated agent accounts on demand.",
+      title: "Provision",
+      description: "Create isolated agent wallets with deterministic identities and policy defaults.",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2H3V7Zm0 4h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6Zm13 3a1.5 1.5 0 1 0 0 3h2v-3h-2Z" />
@@ -80,17 +80,8 @@ export default function LandingPage() {
       )
     },
     {
-      title: "Automated Signing",
-      description: "Execute policy-checked transactions without manual signing.",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2a6 6 0 0 0-6 6v3H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a6 6 0 0 0-6-6Zm-4 9V8a4 4 0 1 1 8 0v3H8Z" />
-        </svg>
-      )
-    },
-    {
-      title: "SOL + SPL Assets",
-      description: "Fund wallets and manage balances across token standards.",
+      title: "Fund",
+      description: "Allocate SOL and SPL balances per agent so strategies operate with isolated risk.",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2 3 6v6c0 5.25 3.45 8.95 9 10 5.55-1.05 9-4.75 9-10V6l-9-4Zm1 5h4v2h-4V7Zm-6 0h4v2H7V7Zm0 4h10v2H7v-2Zm0 4h10v2H7v-2Z" />
@@ -98,13 +89,37 @@ export default function LandingPage() {
       )
     },
     {
-      title: "Transaction Monitor",
-      description: "Track every execution path with live operational telemetry.",
+      title: "Execute",
+      description: "Run automated transactions with guardrails, limits, and protocol-level checks.",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a6 6 0 0 0-6 6v3H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a6 6 0 0 0-6-6Zm-4 9V8a4 4 0 1 1 8 0v3H8Z" />
+        </svg>
+      )
+    },
+    {
+      title: "Monitor",
+      description: "Inspect live transaction logs, signatures, and execution outcomes in one timeline.",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 3h18v2H3V3Zm2 4h14v14H5V7Zm2 2v10h10V9H7Zm2 2h2v6H9v-6Zm4 2h2v4h-2v-4Z" />
         </svg>
       )
+    }
+  ];
+
+  const edgeItems = [
+    {
+      title: "Policy-Safe Execution",
+      copy: "Each agent action is validated against spend limits and allowed-program controls before it is signed."
+    },
+    {
+      title: "Autonomous Wallet Lifecycle",
+      copy: "Provision, fund, run, stop, and restore agent wallets with encrypted key custody and deterministic flows."
+    },
+    {
+      title: "Operator Visibility",
+      copy: "Every run is observable via dashboard state, tx log traces, and optional Telegram notifications."
     }
   ];
 
@@ -151,8 +166,7 @@ export default function LandingPage() {
               <span className="hero-line">for Autonomous Agents</span>
             </h1>
             <p className="minimal-subtext">
-              Create and fund agent wallets,{"\u00A0"}execute policy-safe transactions, and monitor on-chain activity
-              from one dashboard.
+              Create and fund agent wallets, watch them execute trades from one dashboard.
             </p>
             <div className="minimal-actions">
               <Link href="/app" className="minimal-btn minimal-btn-primary" onClick={warmBackendInBackground}>
@@ -181,17 +195,79 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <section id="overview" className="minimal-strip container" aria-label="Platform capabilities">
-        {features.map((feature) => (
-          <article key={feature.title} className="minimal-pill">
-            <div className="minimal-pill-icon">{feature.icon}</div>
-            <div>
-              <h2>{feature.title}</h2>
-              <p>{feature.description}</p>
-            </div>
-          </article>
-        ))}
+      <section id="overview" className="overview-section container" aria-label="Platform capabilities">
+        <div className="overview-header">
+          <p className="edge-kicker">OVERVIEW</p>
+          <h2>One control plane for the complete autonomous wallet lifecycle.</h2>
+        </div>
+        <div className="minimal-strip">
+          {features.map((feature, index) => (
+            <article key={feature.title} className={`minimal-pill minimal-pill-bento minimal-pill-${index + 1}`}>
+              <div className="minimal-pill-icon">{feature.icon}</div>
+              <div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
+
+      <section className="edge-section container" aria-label="Hackathon differentiation">
+        <div className="edge-header">
+          <p className="edge-kicker">WHY AUTARCH DISTRICT</p>
+          <h2>Built for real autonomous wallet operations, not a static demo.</h2>
+        </div>
+        <div className="edge-grid">
+          {edgeItems.map((item, index) => (
+            <article key={item.title} className={`edge-card edge-card-bento edge-card-${index + 1}`}>
+              <h3>{item.title}</h3>
+              <p>{item.copy}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-cta container" aria-label="Primary action">
+        <div className="landing-cta-card">
+          <div>
+            <p className="edge-kicker">READY TO TEST</p>
+            <h3>Run the full agent wallet flow on Solana devnet.</h3>
+          </div>
+          <div className="landing-cta-actions">
+            <Link href="/app" className="minimal-btn minimal-btn-primary" onClick={warmBackendInBackground}>
+              Launch Control Plane
+            </Link>
+            <Link
+              href="https://github.com/Nnadijoshuac/AutarchDistrict#readme"
+              className="minimal-btn minimal-btn-secondary"
+              target="_blank"
+              rel="noreferrer"
+            >
+              View Integration Guide
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="powered-by container" aria-label="Technology attribution">
+        <div className="powered-block">
+          <p className="edge-kicker">NETWORK</p>
+          <h3>Powered by Solana Devnet</h3>
+        </div>
+      </section>
+
+      <footer className="landing-footer container">
+        <p>Autarch District · Agentic Wallet Infrastructure</p>
+        <div className="landing-footer-links">
+          <Link href="https://github.com/Nnadijoshuac/AutarchDistrict" target="_blank" rel="noreferrer">
+            GitHub
+          </Link>
+          <Link href="https://solana.com/docs" target="_blank" rel="noreferrer">
+            Solana Docs
+          </Link>
+        </div>
+      </footer>
     </main>
   );
 }
