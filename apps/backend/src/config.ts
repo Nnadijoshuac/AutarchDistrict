@@ -8,6 +8,8 @@ const envSchema = z.object({
   KMS_MASTER_KEY_BASE64: z.string().min(1),
   PROGRAM_ID: z.string().min(32),
   DATA_DIR: z.string().default(process.env.VERCEL ? "/tmp/autarch-data" : "data"),
+  SIGNER_PRIVATE_KEY: z.string().optional(),
+  SOLANA_KEYPAIR_PATH: z.string().optional(),
   DEMO_NUM_AGENTS: z.coerce.number().int().positive().default(5),
   DEMO_SWAP_AMOUNT: z.coerce.number().int().positive().default(1000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),

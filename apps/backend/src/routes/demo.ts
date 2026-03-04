@@ -12,9 +12,6 @@ import type { WalletExecutor } from "../wallet/txBuilder.js";
 import type { MockDefiClient } from "../protocol/mockDefiClient.js";
 import type { SignerProvider } from "../wallet/signer.js";
 import type { Connection } from "@solana/web3.js";
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import type { Notifier } from "../notifications/notifier.js";
 import { PolicyViolationError } from "../policy/txPolicyEngine.js";
 import { SANDBOX_PROFILE, type PolicyProfile } from "../policy/policyProfile.js";
@@ -24,6 +21,7 @@ import {
   SPL_TOKEN_PROGRAM_ID,
   SYSTEM_PROGRAM_ID
 } from "../solana/constants.js";
+import { loadFundedSigner } from "../solana/fundedSigner.js";
 
 type DemoContext = {
   runner: AgentRunner;
@@ -63,8 +61,6 @@ const runSchema = z.object({
 
 export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext) {
   const state: DemoState = { setupInProgress: false, signatures: [] };
-  const defaultKeypairPath = join(homedir(), ".config", "solana", "id.json");
-  const fundedKeypairPath = process.env.SOLANA_KEYPAIR_PATH ?? defaultKeypairPath;
   const defaultProfile: PolicyProfile = {
     ...SANDBOX_PROFILE,
     allowedPrograms: [
@@ -75,11 +71,6 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
       ctx.programId.toBase58()
     ]
   };
-
-  function loadFundedSigner(): Keypair {
-    const raw = JSON.parse(readFileSync(fundedKeypairPath, "utf8")) as number[];
-    return Keypair.fromSecretKey(Uint8Array.from(raw));
-  }
 
   async function fundWallet(from: Keypair, to: PublicKey, lamports: number): Promise<string> {
     const ix = SystemProgram.transfer({
@@ -116,7 +107,10 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     const adminCreated = await ctx.signerProvider.createSigner();
     state.adminAgentId = adminCreated.agentId;
     const adminSigner = await ctx.signerProvider.getSigner(adminCreated.agentId);
-    const fundedSigner = loadFundedSigner();
+    const fundedSigner = loadFundedSigner({
+      signerPrivateKey: process.env.SIGNER_PRIVATE_KEY,
+      solanaKeypairPath: process.env.SOLANA_KEYPAIR_PATH
+    });
 
     const fundedBalance = await ctx.connection.getBalance(fundedSigner.publicKey, "confirmed");
     const requiredLamports =
