@@ -100,6 +100,25 @@ export class AgentRunner extends EventEmitter {
     return this.strategyLoader.list();
   }
 
+  setAgentPolicy(agentId: string, profile: PolicyProfile): AgentState {
+    const state = this.agents.get(agentId);
+    if (!state) {
+      throw new Error(`Unknown agent: ${agentId}`);
+    }
+    state.policyProfile = profile;
+    return state;
+  }
+
+  setAgentStrategy(agentId: string, strategyName: string): AgentState {
+    const state = this.agents.get(agentId);
+    if (!state) {
+      throw new Error(`Unknown agent: ${agentId}`);
+    }
+    this.strategyLoader.get(strategyName);
+    state.strategy = strategyName;
+    return state;
+  }
+
   resumeActiveRunners(activeAgentIds: string[], intervalMs = 3000): void {
     if (activeAgentIds.length === 0) {
       return;

@@ -35,6 +35,17 @@ export class AgentStore {
     await prisma.agent.updateMany({ where: { id: agentId }, data: { isActive } });
   }
 
+  async updateAgentPolicy(agentId: string, policyProfile: unknown): Promise<void> {
+    await prisma.agent.updateMany({
+      where: { id: agentId },
+      data: { policyProfile: policyProfile as Prisma.InputJsonValue }
+    });
+  }
+
+  async updateAgentStrategy(agentId: string, strategyName: string): Promise<void> {
+    await prisma.agent.updateMany({ where: { id: agentId }, data: { strategyName } });
+  }
+
   async listAgents(): Promise<
     Array<{
       agentId: string;

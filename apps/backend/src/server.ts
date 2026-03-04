@@ -234,7 +234,7 @@ export async function buildServer() {
     }
   });
 
-  await registerAgentRoutes(app, runner, notifier);
+  await registerAgentRoutes(app, runner, agentStore, notifier);
   await registerDemoRoutes(app, {
     runner,
     wallet,

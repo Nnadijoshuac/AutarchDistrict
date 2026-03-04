@@ -5,18 +5,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createAgents,
   listAgents,
+  listPolicyViolations,
+  listStrategies,
   runDemo,
   setupDemo,
   stopDemo,
+  updateAgentPolicy,
+  updateAgentStrategy,
   wakeBackend,
   type Agent,
-  type DemoRunResponse
+  type DemoRunResponse,
+  type PolicyProfile,
+  type PolicyViolation
 } from "../../lib/api";
 import type { TxEvent } from "../../components/TxLog";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:3001/ws";
 
 type BusyAction = "create" | "setup" | "run" | "stop" | null;
+type JudgeStep = "idle" | "agents" | "setup" | "running" | "completed";
 
 function shortPubkey(v: string) {
   return `${v.slice(0, 7)}...${v.slice(-5)}`;
@@ -39,6 +46,19 @@ export default function DashboardPage() {
   const [setupAgents, setSetupAgents] = useState(5);
   const [rounds, setRounds] = useState(3);
   const [amount, setAmount] = useState(1000);
+  const [strategies, setStrategies] = useState<string[]>([]);
+  const [violations, setViolations] = useState<PolicyViolation[]>([]);
+  const [policyForm, setPolicyForm] = useState<PolicyProfile>({
+    name: "sandbox",
+    maxLamportsPerTx: 2_000_000_000,
+    maxDailyLamports: 20_000_000_000,
+    allowedPrograms: [],
+    maxConcurrentTx: 5,
+    slippageBps: 500
+  });
+  const [selectedStrategy, setSelectedStrategy] = useState("randomSwap");
+  const [judgeStep, setJudgeStep] = useState<JudgeStep>("idle");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,6 +68,12 @@ export default function DashboardPage() {
         setStatus("Reaching Autarch District...", "ok");
         await wakeBackend();
         await refreshAgents();
+        const [availableStrategies, policyRows] = await Promise.all([listStrategies(), listPolicyViolations()]);
+        setStrategies(availableStrategies);
+        setViolations(policyRows);
+        if (availableStrategies.length > 0) {
+          setSelectedStrategy(availableStrategies[0]);
+        }
         setStatus("Autarch District is live.", "ok");
       } catch (err) {
         setStatus(err instanceof Error ? err.message : String(err), "error");
@@ -114,12 +140,37 @@ export default function DashboardPage() {
     [agents, selectedAgentId]
   );
 
+  useEffect(() => {
+    if (selected?.policyProfile) {
+      setPolicyForm(selected.policyProfile);
+    }
+    if (selected?.strategy) {
+      setSelectedStrategy(selected.strategy);
+    }
+  }, [selected]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("autarch-theme");
+    if (stored === "dark" || stored === "light") {
+      setTheme(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("autarch-theme", theme);
+  }, [theme]);
+
   const okEvents = useMemo(() => events.filter((e) => e.status === "ok").length, [events]);
   const errorEvents = useMemo(() => events.filter((e) => e.status !== "ok").length, [events]);
 
   async function refreshAgents() {
     const next = await listAgents();
     setAgents(next);
+  }
+
+  async function refreshViolations() {
+    const next = await listPolicyViolations();
+    setViolations(next);
   }
 
   function setStatus(message: string, type: "ok" | "error") {
@@ -148,8 +199,44 @@ export default function DashboardPage() {
     ]);
   }
 
+  async function runJudgeMode() {
+    try {
+      setBusyAction("run");
+      setJudgeStep("agents");
+      await createAgents(3);
+      await refreshAgents();
+      await wait(350);
+
+      setJudgeStep("setup");
+      await setupDemo({ numAgents: 3 });
+      await refreshAgents();
+      await wait(350);
+
+      setJudgeStep("running");
+      const result = await runDemo(20, amount);
+      appendRunEvents(result);
+      await refreshAgents();
+      await refreshViolations();
+
+      setJudgeStep("completed");
+      setStatus(
+        `Judge mode complete: ${result.signatures.length} signatures, ${result.errors.length} errors.`,
+        result.errors.length > 0 ? "error" : "ok"
+      );
+    } catch (err) {
+      setJudgeStep("idle");
+      setStatus(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  function wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   return (
-    <main className="dashboard-root">
+    <main className={`dashboard-root ${theme === "dark" ? "dashboard-dark" : "dashboard-light"}`}>
       <div className="container">
         <header className="app-header">
           <div>
@@ -157,9 +244,17 @@ export default function DashboardPage() {
             <h1 className="display">Agent Wallet Dashboard</h1>
             <p>Provision, fund, execute, and monitor autonomous wallet activity on Solana devnet.</p>
           </div>
-          <Link href="/" className="btn btn-ghost">
-            Back to Landing
-          </Link>
+          <div className="header-actions">
+            <button
+              className="btn btn-ghost"
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
+            <Link href="/" className="btn btn-ghost">
+              Back to Landing
+            </Link>
+          </div>
         </header>
 
         <section className="kpi-grid">
@@ -214,6 +309,20 @@ export default function DashboardPage() {
             >
               Create Agents
             </button>
+            <div className="field">
+              <label htmlFor="strategy">Strategy</label>
+              <select
+                id="strategy"
+                value={selectedStrategy}
+                onChange={(e) => setSelectedStrategy(e.target.value)}
+              >
+                {strategies.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="field">
               <label htmlFor="setupAgents">Setup Agents</label>
@@ -234,6 +343,7 @@ export default function DashboardPage() {
                   setBusyAction("setup");
                   await setupDemo({ numAgents: setupAgents });
                   await refreshAgents();
+                  await refreshViolations();
                   setStatus(`Setup complete for ${setupAgents} agents.`, "ok");
                 } catch (err) {
                   setStatus(err instanceof Error ? err.message : String(err), "error");
@@ -275,6 +385,7 @@ export default function DashboardPage() {
                   const result = await runDemo(rounds, amount);
                   appendRunEvents(result);
                   await refreshAgents();
+                  await refreshViolations();
                   setStatus(
                     `Run complete: ${result.signatures.length} signatures, ${result.errors.length} errors.`,
                     result.errors.length > 0 ? "error" : "ok"
@@ -288,6 +399,9 @@ export default function DashboardPage() {
             >
               Run Demo
             </button>
+            <button className="btn btn-primary" disabled={busyAction !== null} onClick={() => void runJudgeMode()}>
+              Run Full Demo
+            </button>
             <button
               className="btn btn-ghost"
               disabled={busyAction !== null}
@@ -297,6 +411,7 @@ export default function DashboardPage() {
                   await stopDemo();
                   setStatus("Demo stopped.", "ok");
                   await refreshAgents();
+                  await refreshViolations();
                 } catch (err) {
                   setStatus(err instanceof Error ? err.message : String(err), "error");
                 } finally {
@@ -306,6 +421,87 @@ export default function DashboardPage() {
             >
               Stop Demo
             </button>
+          </div>
+          <div className="controls-row controls-policy">
+            <div className="field">
+              <label htmlFor="maxPerTx">Max / Tx (lamports)</label>
+              <input
+                id="maxPerTx"
+                type="number"
+                min={1}
+                value={policyForm.maxLamportsPerTx}
+                onChange={(e) =>
+                  setPolicyForm((prev) => ({ ...prev, maxLamportsPerTx: Math.max(1, Number(e.target.value) || 1) }))
+                }
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="maxDaily">Daily Cap (lamports)</label>
+              <input
+                id="maxDaily"
+                type="number"
+                min={1}
+                value={policyForm.maxDailyLamports}
+                onChange={(e) =>
+                  setPolicyForm((prev) => ({ ...prev, maxDailyLamports: Math.max(1, Number(e.target.value) || 1) }))
+                }
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="slippage">Slippage (bps)</label>
+              <input
+                id="slippage"
+                type="number"
+                min={0}
+                max={10000}
+                value={policyForm.slippageBps}
+                onChange={(e) =>
+                  setPolicyForm((prev) => ({ ...prev, slippageBps: Math.max(0, Number(e.target.value) || 0) }))
+                }
+              />
+            </div>
+            <button
+              className="btn btn-ghost"
+              disabled={!selected || busyAction !== null}
+              onClick={async () => {
+                if (!selected) return;
+                try {
+                  await updateAgentPolicy(selected.agentId, policyForm);
+                  await refreshAgents();
+                  setStatus(`Policy updated for ${selected.agentId}.`, "ok");
+                } catch (err) {
+                  setStatus(err instanceof Error ? err.message : String(err), "error");
+                }
+              }}
+            >
+              Save Policy
+            </button>
+            <button
+              className="btn btn-ghost"
+              disabled={!selected || busyAction !== null}
+              onClick={async () => {
+                if (!selected) return;
+                try {
+                  await updateAgentStrategy(selected.agentId, selectedStrategy);
+                  await refreshAgents();
+                  setStatus(`Strategy updated to ${selectedStrategy}.`, "ok");
+                } catch (err) {
+                  setStatus(err instanceof Error ? err.message : String(err), "error");
+                }
+              }}
+            >
+              Apply Strategy
+            </button>
+          </div>
+          <div className="progress-track">
+            <span className={judgeStep === "agents" || judgeStep === "setup" || judgeStep === "running" || judgeStep === "completed" ? "active" : ""}>
+              Agents created
+            </span>
+            <span className={judgeStep === "setup" || judgeStep === "running" || judgeStep === "completed" ? "active" : ""}>
+              Pool ready
+            </span>
+            <span className={judgeStep === "running" || judgeStep === "completed" ? "active" : ""}>Swaps running</span>
+            <span className={judgeStep === "completed" ? "active" : ""}>Completed</span>
           </div>
           {statusMessage ? (
             <div
@@ -388,6 +584,34 @@ export default function DashboardPage() {
               </div>
             )}
           </article>
+        </section>
+
+        <section className="card panel" style={{ marginTop: 14 }}>
+          <h3 className="display">Denied Transactions</h3>
+          {violations.length === 0 ? (
+            <p className="subtle">No policy violations yet.</p>
+          ) : (
+            <table className="agent-table">
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Code</th>
+                  <th>Reason</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {violations.slice(0, 20).map((item) => (
+                  <tr key={item.id}>
+                    <td className="mono">{item.agentId}</td>
+                    <td>{item.code}</td>
+                    <td>{item.message}</td>
+                    <td>{new Date(item.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
 
         <section className="card panel" style={{ marginTop: 14 }}>

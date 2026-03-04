@@ -2,9 +2,27 @@ export type Agent = {
   agentId: string;
   publicKey: string;
   strategy: string;
+  policyProfile?: PolicyProfile;
   lastStatus: string;
   lastError?: string;
   lastSignature?: string;
+};
+
+export type PolicyProfile = {
+  name: string;
+  maxLamportsPerTx: number;
+  maxDailyLamports: number;
+  allowedPrograms: string[];
+  maxConcurrentTx: number;
+  slippageBps: number;
+};
+
+export type PolicyViolation = {
+  id: string;
+  agentId: string;
+  code: string;
+  message: string;
+  createdAt: string;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/backend";
@@ -94,6 +112,50 @@ export async function createAgents(count: number): Promise<Agent[]> {
   });
   const body = (await res.json()) as { agents: Agent[] };
   return body.agents;
+}
+
+export async function listStrategies(): Promise<string[]> {
+  const res = await apiFetch(`${API_BASE}/strategies`, { cache: "no-store" });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { strategies: string[] };
+  return body.strategies;
+}
+
+export async function updateAgentPolicy(agentId: string, policy: PolicyProfile): Promise<Agent> {
+  const res = await apiFetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}/policy`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(policy)
+  });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { agent: Agent };
+  return body.agent;
+}
+
+export async function updateAgentStrategy(agentId: string, strategyName: string): Promise<Agent> {
+  const res = await apiFetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}/strategy`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ strategyName })
+  });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { agent: Agent };
+  return body.agent;
+}
+
+export async function listPolicyViolations(): Promise<PolicyViolation[]> {
+  const res = await apiFetch(`${API_BASE}/policy-violations`, { cache: "no-store" });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { violations: PolicyViolation[] };
+  return body.violations;
 }
 
 export async function setupDemo(payload: DemoSetupPayload = {}): Promise<DemoSetupResponse> {

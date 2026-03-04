@@ -205,6 +205,12 @@ a {
   color: var(--text-dim);
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .kpi-grid {
   margin-top: 18px;
   display: grid;
@@ -257,6 +263,43 @@ a {
   color: var(--text);
   padding: 10px 10px;
   outline: none;
+}
+
+.field select {
+  width: 150px;
+  border-radius: 10px;
+  border: 1px solid rgba(143, 173, 223, 0.35);
+  background: rgba(8, 19, 42, 0.75);
+  color: var(--text);
+  padding: 10px 10px;
+  outline: none;
+}
+
+.controls-policy {
+  margin-top: 10px;
+}
+
+.progress-track {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.progress-track span {
+  border: 1px solid rgba(20, 20, 20, 0.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #5b5b5b;
+  background: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.progress-track span.active {
+  border-color: rgba(255, 106, 0, 0.45);
+  color: #a84a00;
+  background: rgba(255, 106, 0, 0.08);
 }
 
 .status-banner {
@@ -637,6 +680,19 @@ a {
 
   .field input {
     width: 92px;
+  }
+
+  .field select {
+    width: 132px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .progress-track {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -1530,6 +1586,12 @@ button:focus-visible {
   border: 1px solid rgba(20, 20, 20, 0.14);
 }
 
+.dashboard-root .field select {
+  background: #fff;
+  color: #141414;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+}
+
 .dashboard-root .agent-row.active {
   background: rgba(255, 106, 0, 0.12);
 }
@@ -1561,4 +1623,48 @@ button:focus-visible {
 .dashboard-root .log-item {
   background: #fff;
   border-color: rgba(20, 20, 20, 0.1);
+}
+
+.dashboard-root.dashboard-dark {
+  background: #141414;
+  color: #f5f5f5;
+}
+
+.dashboard-root.dashboard-dark .card {
+  background: rgba(28, 28, 28, 0.92);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-root.dashboard-dark .btn-ghost {
+  background: #1d1d1d;
+  color: #f5f5f5;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-root.dashboard-dark .field input,
+.dashboard-root.dashboard-dark .field select {
+  background: #1d1d1d;
+  color: #f5f5f5;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-root.dashboard-dark .subtle,
+.dashboard-root.dashboard-dark .app-header p,
+.dashboard-root.dashboard-dark .kpi-label,
+.dashboard-root.dashboard-dark .field label,
+.dashboard-root.dashboard-dark .agent-table th,
+.dashboard-root.dashboard-dark .detail-item small {
+  color: #c2c2c2;
+}
+
+.dashboard-root.dashboard-dark .agent-row.active {
+  background: rgba(255, 106, 0, 0.18);
+}
+
+.dashboard-root.dashboard-dark .log-item,
+.dashboard-root.dashboard-dark .progress-track span {
+  background: #1b1b1b;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #d2d2d2;
 }
