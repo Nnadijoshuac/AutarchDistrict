@@ -95,9 +95,9 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     }
     const setupAgents = ctx.runner.listAgents().slice(0, input.numAgents);
 
-    const adminCreated = ctx.signerProvider.createSigner();
+    const adminCreated = await ctx.signerProvider.createSigner();
     state.adminAgentId = adminCreated.agentId;
-    const adminSigner = ctx.signerProvider.getSigner(adminCreated.agentId);
+    const adminSigner = await ctx.signerProvider.getSigner(adminCreated.agentId);
     const fundedSigner = loadFundedSigner();
 
     const fundedBalance = await ctx.connection.getBalance(fundedSigner.publicKey, "confirmed");
@@ -155,7 +155,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     );
 
     for (const agent of setupAgents) {
-      const signer = ctx.signerProvider.getSigner(agent.agentId);
+      const signer = await ctx.signerProvider.getSigner(agent.agentId);
       await topUpWallet(fundedSigner, signer.publicKey, input.agentFundLamports);
 
       const agentAtaA = await getOrCreateAssociatedTokenAccount(

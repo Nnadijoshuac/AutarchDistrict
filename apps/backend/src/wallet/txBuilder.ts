@@ -24,7 +24,7 @@ export class WalletExecutor {
   ): Promise<string> {
     this.policy.assertProgramAllowlist(instructions);
 
-    const signer = this.signerProvider.getSigner(agentId);
+    const signer = await this.signerProvider.getSigner(agentId);
     const payer = signer.publicKey;
 
     const txBuilder = async () => {
@@ -50,13 +50,13 @@ export class WalletExecutor {
 
   async transferSol(agentId: string, to: PublicKey, lamports: number): Promise<string> {
     this.policy.assertLamports(agentId, lamports);
-    const from = this.signerProvider.getSigner(agentId).publicKey;
+    const from = (await this.signerProvider.getSigner(agentId)).publicKey;
     const ix = SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports });
     return this.submitInstructions(agentId, [ix]);
   }
 
   async createAgent(): Promise<{ agentId: string; publicKey: string }> {
-    return this.signerProvider.createSigner();
+    return await this.signerProvider.createSigner();
   }
 
   async submitSwap(agentId: string, instruction: TransactionInstruction, amount: number): Promise<string> {
@@ -64,7 +64,7 @@ export class WalletExecutor {
     return this.submitInstructions(agentId, [instruction]);
   }
 
-  listAgents(): Array<{ agentId: string; publicKey: string; createdAt: string }> {
-    return this.signerProvider.listSigners();
+  async listAgents(): Promise<Array<{ agentId: string; publicKey: string; createdAt: string }>> {
+    return await this.signerProvider.listSigners();
   }
 }

@@ -4,7 +4,8 @@ import { z } from "zod";
 const envSchema = z.object({
   SOLANA_RPC_URL: z.string().url().default("https://api.devnet.solana.com"),
   SOLANA_WS_URL: z.string().url().default("wss://api.devnet.solana.com"),
-  KEYSTORE_MASTER_KEY: z.string().min(32),
+  KMS_PROVIDER: z.enum(["dev"]).default("dev"),
+  KMS_MASTER_KEY_BASE64: z.string().min(1),
   PROGRAM_ID: z.string().min(32),
   DATA_DIR: z.string().default(process.env.VERCEL ? "/tmp/autarch-data" : "data"),
   DEMO_NUM_AGENTS: z.coerce.number().int().positive().default(5),

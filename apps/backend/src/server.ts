@@ -7,7 +7,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { Buffer } from "node:buffer";
 import { loadConfig } from "./config.js";
 import { createConnection } from "./solana/connection.js";
-import { FileKeystore } from "./keystore/keystore.js";
+import { DevKmsProvider } from "./security/devKmsProvider.js";
+import { FileKeystore } from "./security/keystore.js";
 import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
 import { TxPolicyEngine } from "./wallet/txPolicy.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
@@ -32,7 +33,8 @@ export async function buildServer() {
   }
 
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
-  const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), config.KEYSTORE_MASTER_KEY);
+  const kmsProvider = new DevKmsProvider(config.KMS_MASTER_KEY_BASE64);
+  const keystore = new FileKeystore(join(config.DATA_DIR, "keystore.json"), kmsProvider);
   const spendDb = new SpendDb(join(config.DATA_DIR, "spend-db.json"));
   const signerProvider = new LocalEncryptedKeystoreSignerProvider(keystore);
   const policy = new TxPolicyEngine(config.PROGRAM_ID, {
@@ -43,7 +45,7 @@ export async function buildServer() {
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(new PublicKey(config.PROGRAM_ID));
   const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
-  const restoredAgents = runner.restoreAgents(keystore.listSigners());
+  const restoredAgents = runner.restoreAgents(await keystore.listSigners());
   if (restoredAgents.length > 0) {
     app.log.info({ count: restoredAgents.length }, "Restored agents from keystore.");
   }

@@ -3,10 +3,11 @@ import { PublicKey } from "@solana/web3.js";
 import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { AgentRunner } from "./agents/agentRunner.js";
 import { loadConfig } from "./config.js";
-import { FileKeystore } from "./keystore/keystore.js";
 import { createLogger } from "./observability/logger.js";
 import { SpendDb } from "./policy/spendDb.js";
 import { MockDefiClient } from "./protocol/mockDefiClient.js";
+import { DevKmsProvider } from "./security/devKmsProvider.js";
+import { FileKeystore } from "./security/keystore.js";
 import { createConnection } from "./solana/connection.js";
 import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
@@ -18,7 +19,8 @@ async function main() {
   const connection = createConnection(config.SOLANA_RPC_URL, config.SOLANA_WS_URL);
   const programId = new PublicKey(config.PROGRAM_ID);
 
-  const keystore = new FileKeystore("data/keystore.json", config.KEYSTORE_MASTER_KEY);
+  const kmsProvider = new DevKmsProvider(config.KMS_MASTER_KEY_BASE64);
+  const keystore = new FileKeystore("data/keystore.json", kmsProvider);
   const spendDb = new SpendDb("data/spend-db.json");
   const signerProvider = new LocalEncryptedKeystoreSignerProvider(keystore);
   const policy = new TxPolicyEngine(
@@ -35,8 +37,8 @@ async function main() {
   const runner = new AgentRunner(wallet, protocol, () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT));
 
   logger.info("Step 1: create admin + agents");
-  const admin = signerProvider.createSigner();
-  const adminSigner = signerProvider.getSigner(admin.agentId);
+  const admin = await signerProvider.createSigner();
+  const adminSigner = await signerProvider.getSigner(admin.agentId);
   await connection.requestAirdrop(adminSigner.publicKey, 2_000_000_000);
   const agents = await runner.createAgents(config.DEMO_NUM_AGENTS);
 
@@ -46,7 +48,7 @@ async function main() {
 
   const allSignatures: string[] = [];
   for (const agent of agents) {
-    const signer = signerProvider.getSigner(agent.agentId);
+    const signer = await signerProvider.getSigner(agent.agentId);
     await connection.requestAirdrop(signer.publicKey, 1_000_000_000);
     const ataA = await getOrCreateAssociatedTokenAccount(connection, adminSigner, mintA, signer.publicKey);
     await getOrCreateAssociatedTokenAccount(connection, adminSigner, mintB, signer.publicKey);
@@ -78,7 +80,7 @@ async function main() {
   logger.info("Step 5: summary");
   const summary = [];
   for (const agent of agents) {
-    const signer = signerProvider.getSigner(agent.agentId);
+    const signer = await signerProvider.getSigner(agent.agentId);
     const sol = await connection.getBalance(signer.publicKey, "confirmed");
     const ataA = await getOrCreateAssociatedTokenAccount(connection, adminSigner, mintA, signer.publicKey);
     const ataB = await getOrCreateAssociatedTokenAccount(connection, adminSigner, mintB, signer.publicKey);
