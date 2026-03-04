@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createAgents,
   listAgents,
@@ -39,6 +39,8 @@ export default function DashboardPage() {
   const [setupAgents, setSetupAgents] = useState(5);
   const [rounds, setRounds] = useState(3);
   const [amount, setAmount] = useState(1000);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -68,19 +70,44 @@ export default function DashboardPage() {
   }, [statusMessage]);
 
   useEffect(() => {
-    const ws = new WebSocket(WS_URL);
+    let disposed = false;
+    let ws: WebSocket | null = null;
 
-    ws.onopen = () => setWsConnected(true);
-    ws.onclose = () => setWsConnected(false);
-    ws.onerror = () => setWsConnected(false);
-    ws.onmessage = (message) => {
-      const evt = JSON.parse(message.data as string) as TxEvent;
-      setEvents((prev) => [...prev, evt].slice(-120));
-      void refreshAgents();
+    const connect = () => {
+      if (disposed) return;
+      const agentQuery = selectedAgentId ? `?agentId=${encodeURIComponent(selectedAgentId)}` : "";
+      ws = new WebSocket(`${WS_URL}${agentQuery}`);
+
+      ws.onopen = () => {
+        reconnectAttemptRef.current = 0;
+        setWsConnected(true);
+      };
+      ws.onerror = () => setWsConnected(false);
+      ws.onclose = () => {
+        setWsConnected(false);
+        if (disposed) return;
+        const delay = Math.min(16000, 1000 * 2 ** reconnectAttemptRef.current);
+        reconnectAttemptRef.current = Math.min(reconnectAttemptRef.current + 1, 4);
+        reconnectTimerRef.current = setTimeout(connect, delay);
+      };
+      ws.onmessage = (message) => {
+        const evt = JSON.parse(message.data as string) as TxEvent;
+        setEvents((prev) => [...prev, evt].slice(-120));
+        void refreshAgents();
+      };
     };
 
-    return () => ws.close();
-  }, []);
+    connect();
+
+    return () => {
+      disposed = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      ws?.close();
+    };
+  }, [selectedAgentId]);
 
   const selected = useMemo(
     () => agents.find((a) => a.agentId === selectedAgentId) ?? agents[0],

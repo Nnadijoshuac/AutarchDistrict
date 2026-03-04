@@ -125,11 +125,43 @@ export async function buildServer() {
     metrics.setActiveAgents(0);
   }
 
-  const sockets = new Set<{ send: (msg: string) => void }>();
+  type WsClient = {
+    socket: {
+      send: (msg: string) => void;
+      ping: () => void;
+      on: (event: string, cb: (...args: unknown[]) => void) => void;
+      close: () => void;
+    };
+    agentId?: string;
+    isAlive: boolean;
+    heartbeat: NodeJS.Timeout;
+  };
+  const sockets = new Set<WsClient>();
   if (!process.env.VERCEL) {
-    app.get("/ws", { websocket: true }, (socket) => {
-      sockets.add(socket);
-      socket.on("close", () => sockets.delete(socket));
+    app.get("/ws", { websocket: true }, (socket, req) => {
+      const query = new URL(req.url ?? "/ws", "http://localhost").searchParams;
+      const agentId = query.get("agentId") ?? undefined;
+      const client: WsClient = {
+        socket,
+        agentId,
+        isAlive: true,
+        heartbeat: setInterval(() => {
+          if (!client.isAlive) {
+            client.socket.close();
+            return;
+          }
+          client.isAlive = false;
+          client.socket.ping();
+        }, 10_000)
+      };
+      sockets.add(client);
+      socket.on("pong", () => {
+        client.isAlive = true;
+      });
+      socket.on("close", () => {
+        clearInterval(client.heartbeat);
+        sockets.delete(client);
+      });
     });
   } else {
     app.get("/ws", async (_req, reply) => {
@@ -139,8 +171,10 @@ export async function buildServer() {
 
   runner.on("event", (evt) => {
     const serialized = JSON.stringify(evt);
-    for (const ws of sockets) {
-      ws.send(serialized);
+    for (const client of sockets) {
+      if (!client.agentId || client.agentId === evt.agentId) {
+        client.socket.send(serialized);
+      }
     }
 
     void agentStore.recordTransaction({
@@ -184,8 +218,8 @@ export async function buildServer() {
         type: "CIRCUIT_BREAKER_TRIPPED",
         message: "Agent execution halted: failure rate exceeded 40% in a rolling 60s window."
       });
-      for (const ws of sockets) {
-        ws.send(criticalEvt);
+      for (const client of sockets) {
+        client.socket.send(criticalEvt);
       }
       void notifier
         ?.send("Autarch District\nCRITICAL: Circuit breaker tripped. All agents paused.")
