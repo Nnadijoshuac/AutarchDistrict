@@ -14,7 +14,6 @@ import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
 import { MockDefiClient } from "./protocol/mockDefiClient.js";
 import { AgentRunner } from "./agents/agentRunner.js";
-import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { registerAgentRoutes } from "./routes/agents.js";
 import { registerDemoRoutes } from "./routes/demo.js";
 import { SANDBOX_PROFILE, type PolicyProfile } from "./policy/policyProfile.js";
@@ -30,6 +29,7 @@ import {
   SYSTEM_PROGRAM_ID
 } from "./solana/constants.js";
 import { CircuitBreaker } from "./observability/circuitBreaker.js";
+import { StrategyLoader } from "./strategies/strategyLoader.js";
 
 export async function buildServer() {
   const config = loadConfig();
@@ -71,10 +71,15 @@ export async function buildServer() {
   const policy = new TxPolicyEngine(spendDb);
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(new PublicKey(config.PROGRAM_ID));
+  const strategyLoader = await StrategyLoader.create(config.DEMO_SWAP_AMOUNT);
+  const defaultStrategyName = strategyLoader.list().includes("randomSwap")
+    ? "randomSwap"
+    : strategyLoader.list()[0];
   const runner = new AgentRunner(
     wallet,
     protocol,
-    () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT),
+    strategyLoader,
+    defaultStrategyName,
     buildAgentPolicyProfile,
     {
       onAgentCreated: async (state) => {
@@ -93,13 +98,20 @@ export async function buildServer() {
   const persistedAgents = await agentStore.listAgents();
   if (persistedAgents.length > 0) {
     const restoredAgents = runner.restoreAgents(
-      persistedAgents.map((agent) => ({ agentId: agent.agentId, publicKey: agent.publicKey }))
+      persistedAgents.map((agent) => ({
+        agentId: agent.agentId,
+        publicKey: agent.publicKey,
+        strategyName: agent.strategyName,
+        policyProfile: agent.policyProfile as unknown as PolicyProfile
+      }))
     );
     runner.resumeActiveRunners(persistedAgents.filter((agent) => agent.isActive).map((agent) => agent.agentId));
     metrics.setActiveAgents(persistedAgents.filter((agent) => agent.isActive).length);
     app.log.info({ count: restoredAgents.length }, "Restored agents from database.");
   } else {
-    const restoredAgents = runner.restoreAgents(await keystore.listSigners());
+    const restoredAgents = runner.restoreAgents(
+      (await keystore.listSigners()).map((signer) => ({ ...signer, strategyName: defaultStrategyName }))
+    );
     if (restoredAgents.length > 0) {
       for (const state of restoredAgents) {
         const secret = keystore.getStoredAgent(state.agentId);
@@ -134,6 +146,10 @@ export async function buildServer() {
     void agentStore.recordTransaction({
       agentId: evt.agentId,
       status: evt.status,
+      action: evt.action,
+      strategy: evt.strategy,
+      rationale: evt.rationale,
+      riskScore: evt.riskScore,
       signature: evt.signature,
       reason: evt.err
     });

@@ -13,6 +13,7 @@ model Agent {
   encryptedSecret  String
   encryptedDataKey String
   policyProfile    Json
+  strategyName     String   @default("randomSwap") @map("strategy_name")
   isActive         Boolean  @default(false)
   createdAt        DateTime @default(now())
 
@@ -23,6 +24,10 @@ model Agent {
 model Transaction {
   id        String   @id @default(uuid())
   agentId   String
+  action    String?
+  strategy  String?
+  rationale String?
+  riskScore Float?
   signature String?
   status    String
   reason    String?

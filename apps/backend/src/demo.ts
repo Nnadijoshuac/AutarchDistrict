@@ -1,6 +1,5 @@
 import { createMint, getAccount, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { RandomSwapStrategy } from "./agents/strategies/randomSwap.js";
 import { AgentRunner } from "./agents/agentRunner.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./observability/logger.js";
@@ -17,6 +16,7 @@ import {
   SPL_TOKEN_PROGRAM_ID,
   SYSTEM_PROGRAM_ID
 } from "./solana/constants.js";
+import { StrategyLoader } from "./strategies/strategyLoader.js";
 import { LocalEncryptedKeystoreSignerProvider } from "./wallet/signerImpl.js";
 import { WalletExecutor } from "./wallet/txBuilder.js";
 
@@ -45,10 +45,12 @@ async function main() {
   const policy = new TxPolicyEngine(spendDb);
   const wallet = new WalletExecutor(connection, signerProvider, policy);
   const protocol = new MockDefiClient(programId);
+  const strategyLoader = await StrategyLoader.create(config.DEMO_SWAP_AMOUNT);
   const runner = new AgentRunner(
     wallet,
     protocol,
-    () => new RandomSwapStrategy(config.DEMO_SWAP_AMOUNT),
+    strategyLoader,
+    "randomSwap",
     buildAgentPolicyProfile
   );
 

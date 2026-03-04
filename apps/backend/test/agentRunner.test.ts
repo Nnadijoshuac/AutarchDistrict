@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { RandomSwapStrategy } from "../src/agents/strategies/randomSwap.js";
+import { MockDefiClient } from "../src/protocol/mockDefiClient.js";
+import { RandomSwapStrategy } from "../src/strategies/modules/randomSwap.js";
 import { SANDBOX_PROFILE } from "../src/policy/policyProfile.js";
+import { Keypair } from "@solana/web3.js";
 
 describe("agent runner strategy", () => {
-  it("generates swap action", () => {
+  it("generates swap action with rationale", async () => {
     const strategy = new RandomSwapStrategy(10);
-    const action = strategy.nextAction({
+    const protocol = new MockDefiClient(Keypair.generate().publicKey);
+    const user = Keypair.generate().publicKey.toBase58();
+    const action = await strategy.nextAction({
       agentId: "a",
-      publicKey: "p",
-      strategy: "randomSwap",
+      publicKey: user,
       policyProfile: SANDBOX_PROFILE,
-      lastStatus: "idle"
+      protocol
     });
 
-    expect(action?.kind).toBe("swap");
-    expect(action?.amount).toBeGreaterThan(0);
+    expect(action.actionLabel.startsWith("swap:")).toBe(true);
+    expect(action.action).toHaveLength(1);
+    expect(action.rationale.length).toBeGreaterThan(10);
+    expect(action.riskScore).toBeGreaterThanOrEqual(0);
   });
 });

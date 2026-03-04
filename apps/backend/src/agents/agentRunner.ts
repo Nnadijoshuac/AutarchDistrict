@@ -1,18 +1,21 @@
 import { EventEmitter } from "node:events";
 import Bottleneck from "bottleneck";
 import pLimit from "p-limit";
-import { PublicKey } from "@solana/web3.js";
 import type { WalletExecutor } from "../wallet/txBuilder.js";
-import type { AgentState, AgentStrategy } from "./types.js";
+import type { AgentState } from "./types.js";
 import type { MockDefiClient } from "../protocol/mockDefiClient.js";
 import type { PolicyProfile } from "../policy/policyProfile.js";
 import { PolicyViolationError } from "../policy/txPolicyEngine.js";
+import type { StrategyLoader } from "../strategies/strategyLoader.js";
 
 export type RunnerEvent = {
   timestamp: string;
   agentId: string;
   action: string;
   status: "ok" | "error";
+  strategy?: string;
+  rationale?: string;
+  riskScore?: number;
   durationMs?: number;
   signature?: string;
   err?: string;
@@ -32,7 +35,8 @@ export class AgentRunner extends EventEmitter {
   constructor(
     private readonly wallet: WalletExecutor,
     private readonly protocol: MockDefiClient,
-    private readonly strategyFactory: (agentId: string) => AgentStrategy,
+    private readonly strategyLoader: StrategyLoader,
+    private readonly defaultStrategyName: string,
     private readonly profileFactory: (agentId: string) => PolicyProfile,
     private readonly hooks: RunnerHooks = {},
     maxRpcPerSecond = 10,
@@ -43,14 +47,14 @@ export class AgentRunner extends EventEmitter {
     this.actionLimit = pLimit(maxConcurrentAgents);
   }
 
-  async createAgents(count: number): Promise<AgentState[]> {
+  async createAgents(count: number, strategyName = this.defaultStrategyName): Promise<AgentState[]> {
     const created: AgentState[] = [];
     for (let i = 0; i < count; i += 1) {
       const signer = await this.wallet.createAgent();
       const state: AgentState = {
         agentId: signer.agentId,
         publicKey: signer.publicKey,
-        strategy: this.strategyFactory(signer.agentId).name,
+        strategy: strategyName,
         policyProfile: this.profileFactory(signer.agentId),
         lastStatus: "idle"
       };
@@ -63,7 +67,9 @@ export class AgentRunner extends EventEmitter {
     return created;
   }
 
-  restoreAgents(signers: Array<{ agentId: string; publicKey: string }>): AgentState[] {
+  restoreAgents(
+    signers: Array<{ agentId: string; publicKey: string; strategyName?: string; policyProfile?: PolicyProfile }>
+  ): AgentState[] {
     const restored: AgentState[] = [];
     for (const signer of signers) {
       if (this.agents.has(signer.agentId)) {
@@ -72,8 +78,8 @@ export class AgentRunner extends EventEmitter {
       const state: AgentState = {
         agentId: signer.agentId,
         publicKey: signer.publicKey,
-        strategy: this.strategyFactory(signer.agentId).name,
-        policyProfile: this.profileFactory(signer.agentId),
+        strategy: signer.strategyName ?? this.defaultStrategyName,
+        policyProfile: signer.policyProfile ?? this.profileFactory(signer.agentId),
         lastStatus: "idle"
       };
       this.agents.set(signer.agentId, state);
@@ -88,6 +94,10 @@ export class AgentRunner extends EventEmitter {
 
   getAgent(agentId: string): AgentState | undefined {
     return this.agents.get(agentId);
+  }
+
+  listStrategyNames(): string[] {
+    return this.strategyLoader.list();
   }
 
   resumeActiveRunners(activeAgentIds: string[], intervalMs = 3000): void {
@@ -126,34 +136,41 @@ export class AgentRunner extends EventEmitter {
 
   private startAgent(state: AgentState, intervalMs: number): void {
     state.lastStatus = "running";
-    const strategy = this.strategyFactory(state.agentId);
     const timer = setInterval(() => {
-      void this.actionLimit(() => this.runTick(state.agentId, strategy));
+      void this.actionLimit(() => this.runTick(state.agentId));
     }, intervalMs);
     this.timers.set(state.agentId, timer);
     void this.hooks.onAgentStatusChanged?.(state.agentId, true).catch(() => undefined);
   }
 
-  private async runTick(agentId: string, strategy: AgentStrategy): Promise<void> {
+  private async runTick(agentId: string): Promise<void> {
     const state = this.agents.get(agentId);
     if (!state) {
       return;
     }
 
-    const action = strategy.nextAction(state);
-    if (!action) {
+    const strategy = this.strategyLoader.get(state.strategy);
+    const decision = await strategy.nextAction({
+      agentId: state.agentId,
+      publicKey: state.publicKey,
+      policyProfile: state.policyProfile,
+      protocol: this.protocol
+    });
+    if (!decision) {
       return;
     }
 
     const startedAt = Date.now();
     try {
       const signature = await this.limiter.schedule(async () => {
-        const ix = this.protocol.buildSwapInstruction(
-          new PublicKey(state.publicKey),
-          action.direction,
-          action.amount
+        return this.wallet.submitInstructions(
+          agentId,
+          decision.action,
+          undefined,
+          state.policyProfile,
+          0,
+          Math.floor(decision.riskScore * 100)
         );
-        return this.wallet.submitSwap(agentId, ix, action.amount, state.policyProfile);
       });
 
       state.lastSignature = signature;
@@ -162,8 +179,11 @@ export class AgentRunner extends EventEmitter {
       this.emit("event", {
         timestamp: new Date().toISOString(),
         agentId,
-        action: `${action.kind}:${action.direction}:${action.amount}`,
+        action: decision.actionLabel,
         status: "ok",
+        strategy: state.strategy,
+        rationale: decision.rationale,
+        riskScore: decision.riskScore,
         durationMs: Date.now() - startedAt,
         signature
       } satisfies RunnerEvent);
@@ -179,8 +199,11 @@ export class AgentRunner extends EventEmitter {
       this.emit("event", {
         timestamp: new Date().toISOString(),
         agentId,
-        action: `${action.kind}:${action.direction}:${action.amount}`,
+        action: decision.actionLabel,
         status: "error",
+        strategy: state.strategy,
+        rationale: decision.rationale,
+        riskScore: decision.riskScore,
         durationMs: Date.now() - startedAt,
         err: message
       } satisfies RunnerEvent);

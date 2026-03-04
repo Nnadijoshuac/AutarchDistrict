@@ -16,7 +16,8 @@ export class AgentStore {
         publicKey: state.publicKey,
         encryptedSecret: secretRecord.encryptedSecret,
         encryptedDataKey: secretRecord.encryptedDataKey,
-        policyProfile: state.policyProfile as unknown as Prisma.InputJsonValue
+        policyProfile: state.policyProfile as unknown as Prisma.InputJsonValue,
+        strategyName: state.strategy
       },
       create: {
         id: state.agentId,
@@ -24,6 +25,7 @@ export class AgentStore {
         encryptedSecret: secretRecord.encryptedSecret,
         encryptedDataKey: secretRecord.encryptedDataKey,
         policyProfile: state.policyProfile as unknown as Prisma.InputJsonValue,
+        strategyName: state.strategy,
         isActive: false
       }
     });
@@ -33,20 +35,42 @@ export class AgentStore {
     await prisma.agent.updateMany({ where: { id: agentId }, data: { isActive } });
   }
 
-  async listAgents(): Promise<Array<{ agentId: string; publicKey: string; isActive: boolean }>> {
+  async listAgents(): Promise<
+    Array<{
+      agentId: string;
+      publicKey: string;
+      isActive: boolean;
+      strategyName: string;
+      policyProfile: Prisma.JsonValue;
+    }>
+  > {
     const rows = await prisma.agent.findMany({ orderBy: { createdAt: "asc" } });
-    return rows.map((row) => ({ agentId: row.id, publicKey: row.publicKey, isActive: row.isActive }));
+    return rows.map((row) => ({
+      agentId: row.id,
+      publicKey: row.publicKey,
+      isActive: row.isActive,
+      strategyName: row.strategyName,
+      policyProfile: row.policyProfile
+    }));
   }
 
   async recordTransaction(input: {
     agentId: string;
     status: "ok" | "error";
+    action?: string;
+    strategy?: string;
+    rationale?: string;
+    riskScore?: number;
     signature?: string;
     reason?: string;
   }): Promise<void> {
     await prisma.transaction.create({
       data: {
         agentId: input.agentId,
+        action: input.action,
+        strategy: input.strategy,
+        rationale: input.rationale,
+        riskScore: input.riskScore,
         status: input.status,
         signature: input.signature,
         reason: input.reason
