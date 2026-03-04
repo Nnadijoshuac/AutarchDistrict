@@ -100,6 +100,10 @@ export class AgentRunner extends EventEmitter {
     return this.strategyLoader.list();
   }
 
+  activeCount(): number {
+    return this.timers.size;
+  }
+
   setAgentPolicy(agentId: string, profile: PolicyProfile): AgentState {
     const state = this.agents.get(agentId);
     if (!state) {
@@ -151,6 +155,31 @@ export class AgentRunner extends EventEmitter {
       }
       void this.hooks.onAgentStatusChanged?.(agentId, false).catch(() => undefined);
     }
+  }
+
+  startAgentById(agentId: string, intervalMs = 3000): void {
+    const state = this.agents.get(agentId);
+    if (!state) {
+      throw new Error(`Unknown agent: ${agentId}`);
+    }
+    if (this.timers.has(agentId)) {
+      return;
+    }
+    this.startAgent(state, intervalMs);
+  }
+
+  stopAgent(agentId: string): void {
+    const timer = this.timers.get(agentId);
+    if (!timer) {
+      return;
+    }
+    clearInterval(timer);
+    this.timers.delete(agentId);
+    const state = this.agents.get(agentId);
+    if (state) {
+      state.lastStatus = "stopped";
+    }
+    void this.hooks.onAgentStatusChanged?.(agentId, false).catch(() => undefined);
   }
 
   private startAgent(state: AgentState, intervalMs: number): void {

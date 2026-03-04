@@ -16,7 +16,10 @@ const envSchema = z.object({
   TELEGRAM_NOTIFICATIONS_ENABLED: z.coerce.boolean().default(false),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_CHAT_ID: z.string().optional(),
-  TELEGRAM_NOTIFY_AGENT_EVENTS: z.coerce.boolean().default(false)
+  TELEGRAM_NOTIFY_AGENT_EVENTS: z.coerce.boolean().default(false),
+  TELEGRAM_NOTIFY_ON_SUCCESS: z.coerce.boolean().default(false),
+  TELEGRAM_NOTIFY_ON_VIOLATION: z.coerce.boolean().default(false),
+  TELEGRAM_NOTIFY_ON_ERROR: z.coerce.boolean().default(false)
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

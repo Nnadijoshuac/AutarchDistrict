@@ -95,6 +95,38 @@ export async function buildServer() {
     }
   );
 
+  notifier?.startCommandLoop?.(async ({ chatId, text }) => {
+    const [command, arg] = text.split(/\s+/, 2);
+    if (command === "/status") {
+      await notifier.send(
+        `Autarch District\nStatus\nAgents: ${runner.listAgents().length}\nActive: ${runner.activeCount()}`
+      );
+      return;
+    }
+    if (command === "/stop") {
+      if (arg) {
+        runner.stopAgent(arg);
+        await notifier.send(`Autarch District\nStopped agent ${arg}.`);
+      } else {
+        runner.stop();
+        await notifier.send("Autarch District\nStopped all agents.");
+      }
+      return;
+    }
+    if (command === "/start") {
+      if (arg) {
+        runner.startAgentById(arg);
+        await notifier.send(`Autarch District\nStarted agent ${arg}.`);
+      } else {
+        runner.start();
+        await notifier.send("Autarch District\nStarted all agents.");
+      }
+      return;
+    }
+    await notifier.send(`Autarch District\nUnknown command: ${command}\nUse /status, /stop <agentId>, /start <agentId>.`);
+    void chatId;
+  });
+
   const persistedAgents = await agentStore.listAgents();
   if (persistedAgents.length > 0) {
     const restoredAgents = runner.restoreAgents(
@@ -230,7 +262,14 @@ export async function buildServer() {
       const line = `Autarch District\nAgent: ${evt.agentId}\nAction: ${evt.action}\nStatus: ${evt.status}${
         evt.signature ? `\nSig: ${evt.signature}` : ""
       }${evt.err ? `\nError: ${evt.err}` : ""}`;
-      void notifier?.send(line).catch(() => undefined);
+      const isViolation = evt.err?.includes("DENY_") ?? false;
+      const shouldSend =
+        (evt.status === "ok" && config.TELEGRAM_NOTIFY_ON_SUCCESS) ||
+        (evt.status === "error" && isViolation && config.TELEGRAM_NOTIFY_ON_VIOLATION) ||
+        (evt.status === "error" && !isViolation && config.TELEGRAM_NOTIFY_ON_ERROR);
+      if (shouldSend) {
+        void notifier?.send(line).catch(() => undefined);
+      }
     }
   });
 
