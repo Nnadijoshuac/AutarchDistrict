@@ -36,6 +36,7 @@ type DemoContext = {
 
 type DemoState = {
   adminAgentId?: string;
+  demoAgentIds: string[];
   mintA?: PublicKey;
   mintB?: PublicKey;
   poolState?: PublicKey;
@@ -60,7 +61,7 @@ const runSchema = z.object({
 });
 
 export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext) {
-  const state: DemoState = { setupInProgress: false, signatures: [] };
+  const state: DemoState = { setupInProgress: false, signatures: [], demoAgentIds: [] };
   const defaultProfile: PolicyProfile = {
     ...SANDBOX_PROFILE,
     allowedPrograms: [
@@ -102,7 +103,10 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     if (existing.length < input.numAgents) {
       await ctx.runner.createAgents(input.numAgents - existing.length);
     }
-    const setupAgents = ctx.runner.listAgents().slice(0, input.numAgents);
+    const setupAgents = ctx
+      .runner
+      .listAgents()
+      .slice(-input.numAgents);
 
     const adminCreated = await ctx.signerProvider.createSigner();
     state.adminAgentId = adminCreated.agentId;
@@ -193,6 +197,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     state.poolAuthority = poolAuthorityPda;
     state.vaultA = vaultA;
     state.vaultB = vaultB;
+    state.demoAgentIds = setupAgents.map((agent) => agent.agentId);
     void ctx.notifier
       ?.send(
         `Autarch District\nDemo setup complete.\nAgents: ${setupAgents.length}\nMintA: ${mintA.toBase58()}\nMintB: ${mintB.toBase58()}`
@@ -204,7 +209,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
       mintA: mintA.toBase58(),
       mintB: mintB.toBase58(),
       poolAuthority: poolAuthorityPda.toBase58(),
-      agents: ctx.runner.listAgents().length
+      agents: state.demoAgentIds.length
     };
     } finally {
       state.setupInProgress = false;
@@ -220,7 +225,10 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
     }
     const parsed = runSchema.parse(req.body ?? {});
     const amount = Math.min(parsed.amount, ctx.demoSwapAmount);
-    const agents = ctx.runner.listAgents();
+    const agents = ctx.runner.listAgents().filter((agent) => state.demoAgentIds.includes(agent.agentId));
+    if (agents.length === 0) {
+      throw new Error("No demo agents ready. Run /demo/setup first.");
+    }
     const signatures: string[] = [];
     const errors: Array<{ agentId: string; err: string }> = [];
 
@@ -266,6 +274,7 @@ export async function registerDemoRoutes(app: FastifyInstance, ctx: DemoContext)
 
   app.post("/demo/stop", async () => {
     ctx.runner.stop();
+    state.demoAgentIds = [];
     void ctx.notifier?.send("Autarch District\nDemo stopped. Agent execution halted.").catch(() => undefined);
     return { ok: true, signatures: state.signatures.slice(-50) };
   });
