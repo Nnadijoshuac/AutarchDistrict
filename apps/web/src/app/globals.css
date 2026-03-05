@@ -1303,12 +1303,6 @@ button:focus-visible {
     gap: 6px;
   }
 
-  .hero-video-time {
-    width: 100%;
-    margin-left: 0;
-    font-size: 0.74rem;
-  }
-
   .hero-video-right-controls {
     margin-left: 0;
     width: 100%;
@@ -1317,6 +1311,12 @@ button:focus-visible {
 
   .hero-video-speed span {
     display: none;
+  }
+
+  .hero-video-time {
+    width: 100%;
+    margin-left: 0;
+    font-size: 0.74rem;
   }
 
   .minimal-hero-shell .minimal-actions {

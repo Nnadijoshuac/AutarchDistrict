@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const SPEED_OPTIONS = [1, 1.5, 2];
 
@@ -9,9 +9,32 @@ function formatTime(seconds: number) {
     return "00:00";
   }
 
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
+  const totalSeconds = Math.floor(seconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function getPlayableDuration(video: HTMLVideoElement) {
+  if (Number.isFinite(video.duration) && video.duration > 0) {
+    return video.duration;
+  }
+
+  const seekable = video.seekable;
+  if (seekable.length > 0) {
+    const end = seekable.end(seekable.length - 1);
+    if (Number.isFinite(end) && end > 0) {
+      return end;
+    }
+  }
+
+  return 0;
 }
 
 export function CustomHeroVideo() {
@@ -45,7 +68,16 @@ export function CustomHeroVideo() {
     };
   }, []);
 
-  const safeDuration = useMemo(() => (Number.isFinite(duration) && duration > 0 ? duration : 0), [duration]);
+  const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+
+  function getMediaDuration() {
+    const video = videoRef.current;
+    if (!video) {
+      return safeDuration;
+    }
+    const liveDuration = getPlayableDuration(video);
+    return liveDuration || safeDuration;
+  }
 
   function handleTogglePlay() {
     const video = videoRef.current;
@@ -88,11 +120,25 @@ export function CustomHeroVideo() {
 
   function handleSeek(event: ChangeEvent<HTMLInputElement>) {
     const video = videoRef.current;
-    if (!video || !safeDuration) {
+    const mediaDuration = getMediaDuration();
+    if (!video || !mediaDuration) {
       return;
     }
 
-    const nextTime = Number(event.target.value);
+    const nextTime = Math.min(Math.max(Number(event.target.value), 0), mediaDuration);
+    video.currentTime = nextTime;
+    setCurrentTime(nextTime);
+    revealControls();
+  }
+
+  function handleSeekInput(event: FormEvent<HTMLInputElement>) {
+    const video = videoRef.current;
+    const mediaDuration = getMediaDuration();
+    if (!video || !mediaDuration) {
+      return;
+    }
+
+    const nextTime = Math.min(Math.max(Number(event.currentTarget.value), 0), mediaDuration);
     video.currentTime = nextTime;
     setCurrentTime(nextTime);
     revealControls();
@@ -133,18 +179,31 @@ export function CustomHeroVideo() {
 
   function handleSeekBy(deltaSeconds: number) {
     const video = videoRef.current;
-    if (!video || !safeDuration) {
+    const mediaDuration = getMediaDuration();
+    if (!video || !mediaDuration) {
       return;
     }
 
-    const nextTime = Math.min(Math.max(video.currentTime + deltaSeconds, 0), safeDuration);
+    const nextTime = Math.min(Math.max(video.currentTime + deltaSeconds, 0), mediaDuration);
     video.currentTime = nextTime;
     setCurrentTime(nextTime);
     revealControls();
   }
 
+  function syncMediaState(video: HTMLVideoElement) {
+    setDuration(getPlayableDuration(video));
+    setCurrentTime(video.currentTime || 0);
+    setIsMuted(video.muted);
+    setIsPlaying(!video.paused);
+  }
+
   function handleZoneTap(zone: "left" | "center" | "right", pointerType: string) {
     revealControls();
+
+    if (zone === "center") {
+      handleTogglePlay();
+      return;
+    }
 
     if (pointerType !== "touch" && pointerType !== "pen") {
       return;
@@ -158,24 +217,14 @@ export function CustomHeroVideo() {
       return;
     }
 
-    if (zone === "left") {
-      handleSeekBy(-5);
-      return;
-    }
-
-    if (zone === "right") {
-      handleSeekBy(5);
-      return;
-    }
-
-    handleTogglePlay();
+    handleSeekBy(zone === "left" ? -5 : 5);
   }
 
   return (
     <section className="landing-video-section container" aria-label="Product demo video">
       <div className="landing-video-header">
         <p className="edge-kicker">DEMO</p>
-        <h2>See Autarch District in action.</h2>
+        <h2>The Problem Autarch District is Solving.</h2>
       </div>
       <div className="hero-video-card">
         <div
@@ -204,12 +253,16 @@ export function CustomHeroVideo() {
             onPause={() => setIsPlaying(false)}
             onLoadedMetadata={(event) => {
               const video = event.currentTarget;
-              setDuration(video.duration || 0);
-              setCurrentTime(video.currentTime || 0);
               video.muted = false;
               video.playbackRate = playbackRate;
+              syncMediaState(video);
             }}
-            onDurationChange={(event) => setDuration(event.currentTarget.duration || 0)}
+            onLoadedData={(event) => syncMediaState(event.currentTarget)}
+            onCanPlay={(event) => syncMediaState(event.currentTarget)}
+            onProgress={(event) => syncMediaState(event.currentTarget)}
+            onSeeking={(event) => syncMediaState(event.currentTarget)}
+            onSeeked={(event) => syncMediaState(event.currentTarget)}
+            onDurationChange={(event) => syncMediaState(event.currentTarget)}
             onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}
           />
 
@@ -223,7 +276,6 @@ export function CustomHeroVideo() {
             <button
               type="button"
               className="hero-video-seek-zone hero-video-center-zone"
-              onDoubleClick={handleTogglePlay}
               onPointerUp={(event) => handleZoneTap("center", event.pointerType)}
             />
             <button
@@ -244,9 +296,10 @@ export function CustomHeroVideo() {
             <input
               type="range"
               min={0}
-              max={safeDuration || 0}
+              max={Math.max(getMediaDuration(), 0)}
               step={0.1}
-              value={Math.min(currentTime, safeDuration || 0)}
+              value={Math.min(currentTime, Math.max(getMediaDuration(), 0))}
+              onInput={handleSeekInput}
               onChange={handleSeek}
               aria-label="Seek video timeline"
               className="hero-video-timeline"
@@ -260,7 +313,7 @@ export function CustomHeroVideo() {
                 {isMuted ? "Unmute" : "Mute"}
               </button>
               <span className="hero-video-time">
-                {formatTime(currentTime)} / {formatTime(duration)}
+                {formatTime(currentTime)} / {formatTime(getMediaDuration())}
               </span>
 
               <div className="hero-video-right-controls">
