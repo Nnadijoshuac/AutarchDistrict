@@ -1,6 +1,7 @@
 export type Agent = {
   agentId: string;
   publicKey: string;
+  displayName?: string;
   strategy: string;
   policyProfile?: PolicyProfile;
   lastStatus: string;
@@ -147,6 +148,28 @@ export async function updateAgentStrategy(agentId: string, strategyName: string)
   }
   const body = (await res.json()) as { agent: Agent };
   return body.agent;
+}
+
+export async function updateAgentName(agentId: string, displayName: string): Promise<Agent> {
+  const res = await apiFetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}/name`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ displayName })
+  });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { agent: Agent };
+  return body.agent;
+}
+
+export async function deleteAgent(agentId: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
 }
 
 export async function listPolicyViolations(): Promise<PolicyViolation[]> {

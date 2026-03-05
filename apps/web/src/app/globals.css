@@ -82,6 +82,12 @@ a {
   color: var(--text);
 }
 
+.btn-danger {
+  border: 1px solid rgba(208, 71, 71, 0.35);
+  background: rgba(208, 71, 71, 0.1);
+  color: #b32323;
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--panel-border);
@@ -1667,4 +1673,539 @@ button:focus-visible {
   background: #1b1b1b;
   border-color: rgba(255, 255, 255, 0.16);
   color: #d2d2d2;
+}
+
+.copy-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(20, 20, 20, 0.12);
+  background: #fff;
+  color: #5b5b5b;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.copy-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.dashboard-root.dashboard-dark .copy-btn {
+  background: #1f1f1f;
+  color: #d8d8d8;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Dashboard UX Refresh */
+.dashboard-root {
+  padding: 30px 0 72px;
+}
+
+.dashboard-root .app-header {
+  align-items: flex-end;
+  padding-bottom: 6px;
+}
+
+.dashboard-root .app-header h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+}
+
+.dashboard-root .app-header p {
+  margin-top: 10px;
+  max-width: 64ch;
+  line-height: 1.6;
+}
+
+.dashboard-root .kpi-grid {
+  margin-top: 22px;
+  gap: 14px;
+}
+
+.dashboard-root .kpi {
+  padding: 18px 18px 16px;
+}
+
+.dashboard-root .kpi-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-root .kpi-value {
+  font-size: clamp(1.55rem, 2.7vw, 2.2rem);
+}
+
+.dashboard-root .controls {
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.controls-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.control-group {
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 14px;
+}
+
+.control-group h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.control-group p {
+  margin: 6px 0 0;
+  font-size: 0.86rem;
+  color: #5b5b5b;
+}
+
+.control-inline {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.dashboard-root .field input,
+.dashboard-root .field select {
+  min-height: 40px;
+}
+
+.dashboard-root .controls .btn {
+  min-height: 40px;
+}
+
+.dashboard-root .progress-track {
+  margin-top: 14px;
+}
+
+.dashboard-root .status-banner {
+  margin-top: 14px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  border-radius: 12px;
+}
+
+.dashboard-root .agent-table {
+  min-width: 680px;
+}
+
+.dashboard-root .agent-table th {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-root .agent-table td {
+  line-height: 1.5;
+}
+
+.dashboard-root .panel {
+  padding: 16px;
+}
+
+.dashboard-root .panel h3 {
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+}
+
+.dashboard-root .detail-list {
+  gap: 12px;
+}
+
+.dashboard-root .detail-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.dashboard-root .log-list {
+  gap: 10px;
+}
+
+.dashboard-root .log-item {
+  padding: 12px;
+}
+
+@media (max-width: 1000px) {
+  .dashboard-root .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-root .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-root .agent-table {
+    min-width: 620px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-root {
+    padding-top: 20px;
+  }
+
+  .dashboard-root .controls,
+  .dashboard-root .panel,
+  .dashboard-root .kpi {
+    padding: 14px;
+  }
+
+  .control-inline {
+    gap: 8px;
+  }
+
+  .control-group {
+    padding: 12px;
+  }
+
+  .dashboard-root .field input,
+  .dashboard-root .field select {
+    width: 112px;
+  }
+
+  .dashboard-root .controls .btn {
+    width: 100%;
+  }
+
+  .dashboard-root .progress-track {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Agent chat dashboard */
+.social-layout {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.social-panel {
+  padding: 14px;
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.social-panel h3 {
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+}
+
+.agent-chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 485px;
+}
+
+.agent-chat-card {
+  width: 100%;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 14px;
+  padding: 10px 11px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.agent-chat-card.active {
+  border-color: rgba(255, 106, 0, 0.35);
+  background: rgba(255, 106, 0, 0.12);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: linear-gradient(145deg, rgba(255, 106, 0, 0.22), rgba(255, 180, 120, 0.35));
+  color: #8f3d00;
+  flex-shrink: 0;
+}
+
+.agent-chat-meta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.agent-chat-meta strong {
+  font-size: 0.91rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-chat-meta small {
+  color: #5b5b5b;
+  font-size: 0.75rem;
+  line-height: 1.32;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-chat-card .status-chip {
+  align-self: center;
+  font-size: 0.68rem;
+  padding: 3px 8px;
+  line-height: 1;
+}
+
+.feed-head {
+  border: 1px solid rgba(20, 20, 20, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.feed-head p {
+  margin: 6px 0 0;
+  color: #5b5b5b;
+  font-size: 0.88rem;
+}
+
+.feed-copy-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.chat-feed-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.chat-bubble {
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(20, 20, 20, 0.1);
+  background: #fff;
+}
+
+.chat-ok {
+  border-color: rgba(35, 143, 91, 0.24);
+  background: rgba(35, 143, 91, 0.08);
+}
+
+.chat-error {
+  border-color: rgba(208, 71, 71, 0.28);
+  background: rgba(208, 71, 71, 0.08);
+}
+
+.chat-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #5b5b5b;
+  font-size: 0.75rem;
+}
+
+.chat-bubble p {
+  margin: 7px 0 0;
+  line-height: 1.48;
+  font-size: 0.9rem;
+}
+
+.chat-placeholder {
+  border: 1px dashed rgba(20, 20, 20, 0.14);
+  border-radius: 12px;
+  padding: 14px;
+  color: #5b5b5b;
+}
+
+.profile-stack {
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 490px;
+}
+
+.detail-item p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.mini-fields {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.mini-fields label {
+  display: grid;
+  gap: 4px;
+  color: #5b5b5b;
+  font-size: 0.75rem;
+}
+
+.mini-fields input {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+  background: #fff;
+  color: #141414;
+  padding: 8px 10px;
+}
+
+.social-profile .btn {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.rename-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rename-row input {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+  background: #fff;
+  color: #141414;
+  padding: 8px 10px;
+}
+
+.rename-row .btn {
+  width: auto;
+  margin-top: 0;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.dashboard-root .controls .control-inline {
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+
+.dashboard-root .controls .field {
+  min-width: 116px;
+}
+
+.dashboard-root.dashboard-dark .agent-chat-card,
+.dashboard-root.dashboard-dark .feed-head,
+.dashboard-root.dashboard-dark .chat-bubble,
+.dashboard-root.dashboard-dark .mini-fields input,
+.dashboard-root.dashboard-dark .rename-row input {
+  background: #1b1b1b;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e8e8e8;
+}
+
+.dashboard-root.dashboard-dark .btn-danger {
+  background: rgba(208, 71, 71, 0.18);
+  border-color: rgba(208, 71, 71, 0.45);
+  color: #ff9f9f;
+}
+
+.dashboard-root.dashboard-dark .agent-chat-card.active {
+  background: rgba(255, 106, 0, 0.2);
+  border-color: rgba(255, 106, 0, 0.55);
+}
+
+.dashboard-root.dashboard-dark .avatar {
+  background: linear-gradient(145deg, rgba(255, 106, 0, 0.28), rgba(255, 165, 94, 0.36));
+  color: #ffd8bc;
+}
+
+.dashboard-root.dashboard-dark .agent-chat-meta small,
+.dashboard-root.dashboard-dark .feed-head p,
+.dashboard-root.dashboard-dark .chat-meta,
+.dashboard-root.dashboard-dark .mini-fields label {
+  color: #c2c2c2;
+}
+
+@media (max-width: 1200px) {
+  .social-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .social-profile {
+    grid-column: span 2;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .social-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .social-panel {
+    min-height: auto;
+  }
+
+  .social-profile {
+    grid-column: auto;
+  }
+
+  .agent-chat-list,
+  .chat-feed-list,
+  .profile-stack {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .feed-head {
+    flex-direction: column;
+  }
+
+  .feed-copy-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }

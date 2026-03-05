@@ -1,15 +1,17 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createAgents,
+  deleteAgent,
   listAgents,
   listPolicyViolations,
   listStrategies,
   runDemo,
   setupDemo,
   stopDemo,
+  updateAgentName,
   updateAgentPolicy,
   updateAgentStrategy,
   wakeBackend,
@@ -29,8 +31,40 @@ function shortPubkey(v: string) {
   return `${v.slice(0, 7)}...${v.slice(-5)}`;
 }
 
+function shortId(v: string) {
+  return `${v.slice(0, 14)}...${v.slice(-6)}`;
+}
+
 function explorerUrl(sig: string) {
   return `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
+}
+
+function agentPurpose(strategy: string) {
+  if (strategy.toLowerCase().includes("random")) {
+    return "Explores swap opportunities and executes safe demo trades.";
+  }
+  if (strategy.toLowerCase().includes("dca")) {
+    return "Splits trades over time for smoother entries.";
+  }
+  return "Follows the configured strategy and reports each trade.";
+}
+
+function relativeTime(timestamp: string) {
+  const ms = Date.now() - new Date(timestamp).getTime();
+  const seconds = Math.max(1, Math.floor(ms / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" />
+    </svg>
+  );
 }
 
 export default function DashboardPage() {
@@ -57,8 +91,10 @@ export default function DashboardPage() {
     slippageBps: 500
   });
   const [selectedStrategy, setSelectedStrategy] = useState("randomSwap");
+  const [displayNameInput, setDisplayNameInput] = useState("");
   const [judgeStep, setJudgeStep] = useState<JudgeStep>("idle");
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -140,6 +176,11 @@ export default function DashboardPage() {
     [agents, selectedAgentId]
   );
 
+  const selectedAgentEvents = useMemo(() => {
+    if (!selected) return events;
+    return events.filter((evt) => evt.agentId === selected.agentId || evt.agentId === "demo-run");
+  }, [events, selected]);
+
   useEffect(() => {
     if (selected?.policyProfile) {
       setPolicyForm(selected.policyProfile);
@@ -147,6 +188,7 @@ export default function DashboardPage() {
     if (selected?.strategy) {
       setSelectedStrategy(selected.strategy);
     }
+    setDisplayNameInput(selected?.displayName ?? "");
   }, [selected]);
 
   useEffect(() => {
@@ -220,7 +262,7 @@ export default function DashboardPage() {
 
       setJudgeStep("completed");
       setStatus(
-        `Judge mode complete: ${result.signatures.length} signatures, ${result.errors.length} errors.`,
+        `Quick demo done: ${result.signatures.length} successful, ${result.errors.length} failed.`,
         result.errors.length > 0 ? "error" : "ok"
       );
     } catch (err) {
@@ -235,14 +277,24 @@ export default function DashboardPage() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  async function copyText(value: string, fieldId: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(fieldId);
+      setTimeout(() => setCopiedField((current) => (current === fieldId ? null : current)), 1200);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Failed to copy value.", "error");
+    }
+  }
+
   return (
     <main className={`dashboard-root ${theme === "dark" ? "dashboard-dark" : "dashboard-light"}`}>
       <div className="container">
         <header className="app-header">
           <div>
             <div className="pill">Autarch District Control Plane</div>
-            <h1 className="display">Agent Wallet Dashboard</h1>
-            <p>Provision, fund, execute, and monitor autonomous wallet activity on Solana devnet.</p>
+            <h1 className="display">Agent Chat Dashboard</h1>
+            <p>Pick an agent, see its role, and follow every trade like a live conversation.</p>
           </div>
           <div className="header-actions">
             <button
@@ -259,29 +311,29 @@ export default function DashboardPage() {
 
         <section className="kpi-grid">
           <div className="card kpi">
-            <div className="kpi-label">Active Agents</div>
+            <div className="kpi-label">Agents</div>
             <div className="kpi-value">{agents.length}</div>
           </div>
           <div className="card kpi">
-            <div className="kpi-label">WebSocket</div>
+            <div className="kpi-label">Connection</div>
             <div className="kpi-value" style={{ color: wsConnected ? "#238f5b" : "#d04747" }}>
-              {wsConnected ? "Connected" : "Offline"}
+              {wsConnected ? "Live" : "Offline"}
             </div>
           </div>
           <div className="card kpi">
-            <div className="kpi-label">Successful Events</div>
+            <div className="kpi-label">Successful</div>
             <div className="kpi-value">{okEvents}</div>
           </div>
           <div className="card kpi">
-            <div className="kpi-label">Error Events</div>
+            <div className="kpi-label">Errors</div>
             <div className="kpi-value">{errorEvents}</div>
           </div>
         </section>
 
         <section className="card controls">
-          <div className="controls-row">
+          <div className="control-inline">
             <div className="field">
-              <label htmlFor="createCount">Create Count</label>
+              <label htmlFor="createCount">Wallets to create</label>
               <input
                 id="createCount"
                 type="number"
@@ -310,22 +362,7 @@ export default function DashboardPage() {
               Create Agents
             </button>
             <div className="field">
-              <label htmlFor="strategy">Strategy</label>
-              <select
-                id="strategy"
-                value={selectedStrategy}
-                onChange={(e) => setSelectedStrategy(e.target.value)}
-              >
-                {strategies.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field">
-              <label htmlFor="setupAgents">Setup Agents</label>
+              <label htmlFor="setupAgents">Agents to fund</label>
               <input
                 id="setupAgents"
                 type="number"
@@ -352,9 +389,8 @@ export default function DashboardPage() {
                 }
               }}
             >
-              Fund/Setup Demo
+              Fund Agents
             </button>
-
             <div className="field">
               <label htmlFor="rounds">Rounds</label>
               <input
@@ -387,7 +423,7 @@ export default function DashboardPage() {
                   await refreshAgents();
                   await refreshViolations();
                   setStatus(
-                    `Run complete: ${result.signatures.length} signatures, ${result.errors.length} errors.`,
+                    `Run complete: ${result.signatures.length} successful, ${result.errors.length} failed.`,
                     result.errors.length > 0 ? "error" : "ok"
                   );
                 } catch (err) {
@@ -397,10 +433,10 @@ export default function DashboardPage() {
                 }
               }}
             >
-              Run Demo
+              Run Trades
             </button>
             <button className="btn btn-primary" disabled={busyAction !== null} onClick={() => void runJudgeMode()}>
-              Run Full Demo
+              Quick Demo
             </button>
             <button
               className="btn btn-ghost"
@@ -409,7 +445,7 @@ export default function DashboardPage() {
                 try {
                   setBusyAction("stop");
                   await stopDemo();
-                  setStatus("Demo stopped.", "ok");
+                  setStatus("Stopped.", "ok");
                   await refreshAgents();
                   await refreshViolations();
                 } catch (err) {
@@ -419,80 +455,10 @@ export default function DashboardPage() {
                 }
               }}
             >
-              Stop Demo
+              Stop
             </button>
           </div>
-          <div className="controls-row controls-policy">
-            <div className="field">
-              <label htmlFor="maxPerTx">Max / Tx (lamports)</label>
-              <input
-                id="maxPerTx"
-                type="number"
-                min={1}
-                value={policyForm.maxLamportsPerTx}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, maxLamportsPerTx: Math.max(1, Number(e.target.value) || 1) }))
-                }
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="maxDaily">Daily Cap (lamports)</label>
-              <input
-                id="maxDaily"
-                type="number"
-                min={1}
-                value={policyForm.maxDailyLamports}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, maxDailyLamports: Math.max(1, Number(e.target.value) || 1) }))
-                }
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="slippage">Slippage (bps)</label>
-              <input
-                id="slippage"
-                type="number"
-                min={0}
-                max={10000}
-                value={policyForm.slippageBps}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, slippageBps: Math.max(0, Number(e.target.value) || 0) }))
-                }
-              />
-            </div>
-            <button
-              className="btn btn-ghost"
-              disabled={!selected || busyAction !== null}
-              onClick={async () => {
-                if (!selected) return;
-                try {
-                  await updateAgentPolicy(selected.agentId, policyForm);
-                  await refreshAgents();
-                  setStatus(`Policy updated for ${selected.agentId}.`, "ok");
-                } catch (err) {
-                  setStatus(err instanceof Error ? err.message : String(err), "error");
-                }
-              }}
-            >
-              Save Policy
-            </button>
-            <button
-              className="btn btn-ghost"
-              disabled={!selected || busyAction !== null}
-              onClick={async () => {
-                if (!selected) return;
-                try {
-                  await updateAgentStrategy(selected.agentId, selectedStrategy);
-                  await refreshAgents();
-                  setStatus(`Strategy updated to ${selectedStrategy}.`, "ok");
-                } catch (err) {
-                  setStatus(err instanceof Error ? err.message : String(err), "error");
-                }
-              }}
-            >
-              Apply Strategy
-            </button>
-          </div>
+
           <div className="progress-track">
             <span className={judgeStep === "agents" || judgeStep === "setup" || judgeStep === "running" || judgeStep === "completed" ? "active" : ""}>
               Agents created
@@ -503,6 +469,7 @@ export default function DashboardPage() {
             <span className={judgeStep === "running" || judgeStep === "completed" ? "active" : ""}>Swaps running</span>
             <span className={judgeStep === "completed" ? "active" : ""}>Completed</span>
           </div>
+
           {statusMessage ? (
             <div
               className={`status-banner ${statusType === "ok" ? "status-ok" : "status-error"} ${
@@ -514,134 +481,348 @@ export default function DashboardPage() {
           ) : null}
         </section>
 
-        <section className="app-grid">
-          <article className="card panel">
-            <h3 className="display">Agent Fleet</h3>
+        <section className="social-layout">
+          <aside className="card social-panel social-agents">
+            <h3 className="display">Agents</h3>
             {agents.length === 0 ? (
-              <p className="subtle">No agents yet. Create agents or run setup.</p>
+              <p className="subtle">No agents yet.</p>
             ) : (
-              <table className="agent-table">
-                <thead>
-                  <tr>
-                    <th>Agent</th>
-                    <th>Pubkey</th>
-                    <th>Status</th>
-                    <th>Strategy</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.map((agent) => (
-                    <tr
-                      key={agent.agentId}
-                      className={`agent-row ${selected?.agentId === agent.agentId ? "active" : ""}`}
+              <ul className="agent-chat-list">
+                {agents.map((agent, index) => (
+                  <li key={agent.agentId}>
+                    <button
+                      className={`agent-chat-card ${selected?.agentId === agent.agentId ? "active" : ""}`}
                       onClick={() => setSelectedAgentId(agent.agentId)}
                     >
-                      <td>{agent.agentId}</td>
-                      <td className="mono">{shortPubkey(agent.publicKey)}</td>
-                      <td>
-                        <span className={`status-chip ${agent.lastStatus}`}>{agent.lastStatus}</span>
-                      </td>
-                      <td>{agent.strategy}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      <span className="avatar">A{index + 1}</span>
+                      <span className="agent-chat-meta">
+                        <strong>{agent.displayName?.trim() || `Agent ${index + 1}`}</strong>
+                        <small>{shortId(agent.agentId)}</small>
+                        <small>{agentPurpose(agent.strategy)}</small>
+                      </span>
+                      <span className={`status-chip ${agent.lastStatus}`}>{agent.lastStatus}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
+
+          <article className="card social-panel social-feed">
+            <h3 className="display">Live Activity</h3>
+            {!selected ? (
+              <p className="subtle">Select an agent to see activity.</p>
+            ) : (
+              <>
+                <div className="feed-head">
+                  <div>
+                    <strong>Agent Role</strong>
+                    <p>{agentPurpose(selected.strategy)}</p>
+                  </div>
+                  <div className="feed-copy-actions">
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      aria-label="Copy selected agent ID"
+                      onClick={() => void copyText(selected.agentId, "feed-agent-id")}
+                    >
+                      <CopyIcon />
+                      <span>{copiedField === "feed-agent-id" ? "Copied" : "Copy ID"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      aria-label="Copy selected agent public key"
+                      onClick={() => void copyText(selected.publicKey, "feed-pubkey")}
+                    >
+                      <CopyIcon />
+                      <span>{copiedField === "feed-pubkey" ? "Copied" : "Copy Key"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <ul className="chat-feed-list">
+                  {selectedAgentEvents.length === 0 ? (
+                    <li className="chat-placeholder">No messages yet. Run a demo to see trade updates.</li>
+                  ) : (
+                    selectedAgentEvents
+                      .slice(-40)
+                      .reverse()
+                      .map((evt, index) => (
+                        <li
+                          key={`${evt.timestamp}-${index}`}
+                          className={`chat-bubble ${evt.status === "ok" ? "chat-ok" : "chat-error"}`}
+                        >
+                          <div className="chat-meta">
+                            <span>{evt.agentId === "demo-run" ? "System" : shortId(evt.agentId)}</span>
+                            <span>{relativeTime(evt.timestamp)}</span>
+                          </div>
+                          <p>
+                            {evt.status === "ok"
+                              ? `Completed ${evt.action}.`
+                              : `Failed ${evt.action}: ${evt.err ?? "Unknown error"}`}
+                          </p>
+                          {evt.signature ? (
+                            <a href={explorerUrl(evt.signature)} target="_blank" rel="noreferrer" className="mono">
+                              View transaction
+                            </a>
+                          ) : null}
+                        </li>
+                      ))
+                  )}
+                </ul>
+              </>
             )}
           </article>
 
-          <article className="card panel">
-            <h3 className="display">Agent Detail</h3>
+          <aside className="card social-panel social-profile">
+            <h3 className="display">Profile</h3>
             {!selected ? (
-              <p className="subtle">Select an agent to inspect details.</p>
+              <p className="subtle">Select an agent.</p>
             ) : (
-              <div className="detail-list">
+              <div className="profile-stack">
+                <div className="detail-item">
+                  <small>What this agent is for</small>
+                  <p>{agentPurpose(selected.strategy)}</p>
+                </div>
+                <div className="detail-item">
+                  <small>Agent Name</small>
+                  <div className="rename-row">
+                    <input
+                      type="text"
+                      value={displayNameInput}
+                      placeholder="e.g. Momentum Trader"
+                      onChange={(e) => setDisplayNameInput(e.target.value)}
+                    />
+                    <button
+                      className="btn btn-ghost"
+                      disabled={!selected || busyAction !== null || displayNameInput.trim().length === 0}
+                      onClick={async () => {
+                        if (!selected) return;
+                        try {
+                          await updateAgentName(selected.agentId, displayNameInput.trim());
+                          await refreshAgents();
+                          setStatus("Agent name updated.", "ok");
+                        } catch (err) {
+                          setStatus(err instanceof Error ? err.message : String(err), "error");
+                        }
+                      }}
+                    >
+                      Save Name
+                    </button>
+                  </div>
+                  <button
+                    className="btn btn-danger"
+                    disabled={!selected || busyAction !== null}
+                    onClick={async () => {
+                      if (!selected) return;
+                      const proceed = window.confirm(`Delete ${selected.displayName ?? selected.agentId}?`);
+                      if (!proceed) return;
+                      try {
+                        await deleteAgent(selected.agentId);
+                        await refreshAgents();
+                        setSelectedAgentId(undefined);
+                        setStatus("Agent deleted.", "ok");
+                      } catch (err) {
+                        setStatus(err instanceof Error ? err.message : String(err), "error");
+                      }
+                    }}
+                  >
+                    Delete Agent
+                  </button>
+                </div>
                 <div className="detail-item">
                   <small>Agent ID</small>
-                  <div className="mono">{selected.agentId}</div>
+                  <div className="copy-cell">
+                    <div className="mono">{selected.agentId}</div>
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      aria-label="Copy selected wallet ID"
+                      onClick={() => void copyText(selected.agentId, "detail-agent-id")}
+                    >
+                      <CopyIcon />
+                      <span>{copiedField === "detail-agent-id" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="detail-item">
                   <small>Public Key</small>
-                  <div className="mono">{selected.publicKey}</div>
+                  <div className="copy-cell">
+                    <div className="mono">{selected.publicKey}</div>
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      aria-label="Copy selected public key"
+                      onClick={() => void copyText(selected.publicKey, "detail-pubkey")}
+                    >
+                      <CopyIcon />
+                      <span>{copiedField === "detail-pubkey" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="detail-item">
-                  <small>Last Status</small>
-                  <div>{selected.lastStatus}</div>
+                  <small>Trading Style</small>
+                  <div className="field">
+                    <select value={selectedStrategy} onChange={(e) => setSelectedStrategy(e.target.value)}>
+                      {strategies.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    className="btn btn-ghost"
+                    disabled={!selected || busyAction !== null}
+                    onClick={async () => {
+                      if (!selected) return;
+                      try {
+                        await updateAgentStrategy(selected.agentId, selectedStrategy);
+                        await refreshAgents();
+                        setStatus(`Strategy updated to ${selectedStrategy}.`, "ok");
+                      } catch (err) {
+                        setStatus(err instanceof Error ? err.message : String(err), "error");
+                      }
+                    }}
+                  >
+                    Apply Style
+                  </button>
                 </div>
                 <div className="detail-item">
-                  <small>Last Signature</small>
-                  {selected.lastSignature ? (
-                    <a href={explorerUrl(selected.lastSignature)} target="_blank" rel="noreferrer" className="mono">
-                      {selected.lastSignature}
-                    </a>
-                  ) : (
-                    <div className="subtle">n/a</div>
-                  )}
-                </div>
-                <div className="detail-item">
-                  <small>Error</small>
-                  <div>{selected.lastError ?? "none"}</div>
+                  <small>Safety Limits</small>
+                  <div className="mini-fields">
+                    <label>
+                      Max per trade
+                      <input
+                        type="number"
+                        min={1}
+                        value={policyForm.maxLamportsPerTx}
+                        onChange={(e) =>
+                          setPolicyForm((prev) => ({ ...prev, maxLamportsPerTx: Math.max(1, Number(e.target.value) || 1) }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Daily cap
+                      <input
+                        type="number"
+                        min={1}
+                        value={policyForm.maxDailyLamports}
+                        onChange={(e) =>
+                          setPolicyForm((prev) => ({ ...prev, maxDailyLamports: Math.max(1, Number(e.target.value) || 1) }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Slippage bps
+                      <input
+                        type="number"
+                        min={0}
+                        max={10000}
+                        value={policyForm.slippageBps}
+                        onChange={(e) =>
+                          setPolicyForm((prev) => ({ ...prev, slippageBps: Math.max(0, Number(e.target.value) || 0) }))
+                        }
+                      />
+                    </label>
+                  </div>
+                  <button
+                    className="btn btn-ghost"
+                    disabled={!selected || busyAction !== null}
+                    onClick={async () => {
+                      if (!selected) return;
+                      try {
+                        await updateAgentPolicy(selected.agentId, policyForm);
+                        await refreshAgents();
+                        setStatus(`Safety limits updated for ${selected.agentId}.`, "ok");
+                      } catch (err) {
+                        setStatus(err instanceof Error ? err.message : String(err), "error");
+                      }
+                    }}
+                  >
+                    Save Limits
+                  </button>
                 </div>
               </div>
             )}
-          </article>
-        </section>
-
-        <section className="card panel" style={{ marginTop: 14 }}>
-          <h3 className="display">Denied Transactions</h3>
-          {violations.length === 0 ? (
-            <p className="subtle">No policy violations yet.</p>
-          ) : (
-            <table className="agent-table">
-              <thead>
-                <tr>
-                  <th>Agent</th>
-                  <th>Code</th>
-                  <th>Reason</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {violations.slice(0, 20).map((item) => (
-                  <tr key={item.id}>
-                    <td className="mono">{item.agentId}</td>
-                    <td>{item.code}</td>
-                    <td>{item.message}</td>
-                    <td>{new Date(item.createdAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          </aside>
         </section>
 
         <section className="card panel" style={{ marginTop: 14 }}>
           <h3 className="display">Transaction Log</h3>
           {events.length === 0 ? (
-            <p className="subtle">No events yet. Run setup and execution to populate the log.</p>
+            <p className="subtle">No activity yet. Run funding and trades to populate this log.</p>
           ) : (
-            <ul className="log-list">
-              {events
-                .slice(-30)
-                .reverse()
-                .map((evt, index) => (
-                  <li key={`${evt.timestamp}-${index}`} className="log-item">
-                    <div>
-                      <span className="subtle">{new Date(evt.timestamp).toLocaleString()}</span> ·{" "}
-                      <span className="mono">{evt.agentId}</span> · {evt.action}
-                    </div>
-                    <div style={{ marginTop: 4 }}>
-                      <strong className={evt.status === "ok" ? "ok" : "error"}>{evt.status}</strong>{" "}
-                      {evt.signature ? (
-                        <a href={explorerUrl(evt.signature)} target="_blank" rel="noreferrer" className="mono">
-                          {evt.signature}
-                        </a>
-                      ) : (
-                        <span>{evt.err}</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-            </ul>
+            <div className="table-wrap">
+              <table className="agent-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events
+                    .slice(-35)
+                    .reverse()
+                    .map((evt, index) => (
+                      <tr key={`${evt.timestamp}-${index}`}>
+                        <td className="mono">{evt.agentId === "demo-run" ? "system" : shortId(evt.agentId)}</td>
+                        <td>{evt.action}</td>
+                        <td>
+                          <span className={`status-chip ${evt.status === "ok" ? "running" : "error"}`}>
+                            {evt.status}
+                          </span>
+                        </td>
+                        <td>
+                          {evt.signature ? (
+                            <a href={explorerUrl(evt.signature)} target="_blank" rel="noreferrer" className="mono">
+                              {shortId(evt.signature)}
+                            </a>
+                          ) : (
+                            <span>{evt.err ?? "No error details"}</span>
+                          )}
+                        </td>
+                        <td>{new Date(evt.timestamp).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="card panel" style={{ marginTop: 14 }}>
+          <h3 className="display">Denied Transactions</h3>
+          {violations.length === 0 ? (
+            <p className="subtle">No blocked transactions yet.</p>
+          ) : (
+            <div className="table-wrap">
+              <table className="agent-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Code</th>
+                    <th>Reason</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {violations.slice(0, 20).map((item) => (
+                    <tr key={item.id}>
+                      <td className="mono">{shortId(item.agentId)}</td>
+                      <td>{item.code}</td>
+                      <td>{item.message}</td>
+                      <td>{new Date(item.createdAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       </div>
