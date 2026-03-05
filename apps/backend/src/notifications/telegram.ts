@@ -21,6 +21,9 @@ type TelegramUpdateResponse = {
 class TelegramNotifier implements Notifier {
   private offset = 0;
   private commandLoopStarted = false;
+  private commandLoopTimer?: NodeJS.Timeout;
+  private commandPollingDisabled = false;
+  private isPolling = false;
 
   constructor(
     private readonly token: string,
@@ -37,8 +40,14 @@ class TelegramNotifier implements Notifier {
       return;
     }
     this.commandLoopStarted = true;
-    setInterval(() => {
-      void this.pollUpdates(handler);
+    this.commandLoopTimer = setInterval(() => {
+      if (this.commandPollingDisabled || this.isPolling) {
+        return;
+      }
+      this.isPolling = true;
+      void this.pollUpdates(handler).finally(() => {
+        this.isPolling = false;
+      });
     }, 4000);
   }
 
@@ -65,6 +74,18 @@ class TelegramNotifier implements Notifier {
       const res = await fetch(endpoint);
       if (!res.ok) {
         const text = await res.text();
+        if (res.status === 409) {
+          this.commandPollingDisabled = true;
+          if (this.commandLoopTimer) {
+            clearInterval(this.commandLoopTimer);
+            this.commandLoopTimer = undefined;
+          }
+          this.logger.warn(
+            { status: res.status, text },
+            "Telegram command polling disabled due to 409 conflict. Keep only one getUpdates consumer."
+          );
+          return;
+        }
         this.logger.warn({ status: res.status, text }, "Telegram update polling failed.");
         return;
       }
