@@ -8,6 +8,7 @@ import { LandingNav } from "../components/landing/LandingNav";
 import { NetworkSection } from "../components/landing/NetworkSection";
 import { OverviewSection } from "../components/landing/OverviewSection";
 import { ReadySection } from "../components/landing/ReadySection";
+import { CustomHeroVideo } from "../components/landing/CustomHeroVideo";
 import { useHeroParallax } from "../components/landing/useHeroParallax";
 
 export default function LandingPage() {
@@ -23,6 +24,7 @@ export default function LandingPage() {
       <HeroSection onWarmBackend={warmBackendInBackground} />
       <FloatingMedia backImageRef={backImageRef} frontImageRef={frontImageRef} />
       <OverviewSection />
+      <CustomHeroVideo />
       <EdgeSection />
       <ReadySection onWarmBackend={warmBackendInBackground} />
       <NetworkSection />
