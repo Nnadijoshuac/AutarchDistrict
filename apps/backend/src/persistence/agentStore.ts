@@ -141,4 +141,28 @@ export class AgentStore {
       createdAt: row.createdAt.toISOString()
     }));
   }
+
+  async listRecentTransactions(limit = 200): Promise<
+    Array<{
+      agentId: string;
+      action: string | null;
+      status: string;
+      signature: string | null;
+      reason: string | null;
+      createdAt: string;
+    }>
+  > {
+    const rows = await prisma.transaction.findMany({
+      take: limit,
+      orderBy: { createdAt: "desc" }
+    });
+    return rows.map((row) => ({
+      agentId: row.agentId,
+      action: row.action,
+      status: row.status,
+      signature: row.signature,
+      reason: row.reason,
+      createdAt: row.createdAt.toISOString()
+    }));
+  }
 }

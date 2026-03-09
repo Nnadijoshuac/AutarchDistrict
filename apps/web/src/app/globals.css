@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --bg: #fffaf5;
   --bg-soft: #fff1e3;
@@ -72,8 +74,8 @@ a {
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, var(--brand), #3fe7d8);
-  color: #05211e;
+  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
+  color: #fff;
 }
 
 .btn-ghost {
@@ -83,9 +85,9 @@ a {
 }
 
 .btn-danger {
-  border: 1px solid rgba(208, 71, 71, 0.35);
-  background: rgba(208, 71, 71, 0.1);
-  color: #b32323;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.12);
+  color: #ff8a2a;
 }
 
 .card {
@@ -328,13 +330,13 @@ a {
 }
 
 .status-ok {
-  background: rgba(72, 213, 151, 0.12);
-  border-color: rgba(72, 213, 151, 0.35);
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.35);
 }
 
 .status-error {
-  background: rgba(255, 90, 111, 0.12);
-  border-color: rgba(255, 90, 111, 0.34);
+  background: rgba(120, 120, 120, 0.14);
+  border-color: rgba(180, 180, 180, 0.28);
 }
 
 .app-grid {
@@ -389,13 +391,13 @@ a {
 }
 
 .status-chip.running {
-  color: #93f7ca;
-  border-color: rgba(72, 213, 151, 0.4);
+  color: #ffb173;
+  border-color: rgba(249, 115, 22, 0.4);
 }
 
 .status-chip.error {
-  color: #ff9ba7;
-  border-color: rgba(255, 90, 111, 0.4);
+  color: #bdbdbd;
+  border-color: rgba(180, 180, 180, 0.35);
 }
 
 .detail-list {
@@ -431,15 +433,50 @@ a {
 }
 
 .log-item .ok {
-  color: #9ef1cb;
+  color: #ffb173;
 }
 
 .log-item .error {
-  color: #ff9ea8;
+  color: #c4c4c4;
 }
 
 .subtle {
   color: var(--text-dim);
+}
+
+/* Autarch skeuomorphic helpers (used by dashboard) */
+.skeuo-card {
+  background-color: #1a1a1e;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.05);
+}
+
+.skeuo-inset {
+  background-color: #121214;
+  border-radius: 0.5rem;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.05);
+}
+
+.skeuo-button {
+  background-color: #222226;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), inset 1px 1px 1px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 100ms ease, transform 100ms ease;
+}
+
+.skeuo-button:active {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.05);
+  transform: translateY(1px);
+}
+
+.skeuo-primary-button {
+  background-color: #f97316;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 .minimal-landing {
@@ -1811,23 +1848,23 @@ button:focus-visible {
 }
 
 .dashboard-root .status-chip.running {
-  color: #238f5b;
-  border-color: rgba(35, 143, 91, 0.35);
+  color: #ff8a2a;
+  border-color: rgba(249, 115, 22, 0.35);
 }
 
 .dashboard-root .status-chip.error {
-  color: #d04747;
-  border-color: rgba(208, 71, 71, 0.35);
+  color: #6b6b6b;
+  border-color: rgba(120, 120, 120, 0.32);
 }
 
 .dashboard-root .status-ok {
-  background: rgba(35, 143, 91, 0.1);
-  border-color: rgba(35, 143, 91, 0.26);
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.26);
 }
 
 .dashboard-root .status-error {
-  background: rgba(208, 71, 71, 0.1);
-  border-color: rgba(208, 71, 71, 0.26);
+  background: rgba(120, 120, 120, 0.12);
+  border-color: rgba(120, 120, 120, 0.26);
 }
 
 .dashboard-root .log-item {
@@ -2238,13 +2275,13 @@ button:focus-visible {
 }
 
 .chat-ok {
-  border-color: rgba(35, 143, 91, 0.24);
-  background: rgba(35, 143, 91, 0.08);
+  border-color: rgba(249, 115, 22, 0.24);
+  background: rgba(249, 115, 22, 0.08);
 }
 
 .chat-error {
-  border-color: rgba(208, 71, 71, 0.28);
-  background: rgba(208, 71, 71, 0.08);
+  border-color: rgba(120, 120, 120, 0.32);
+  background: rgba(120, 120, 120, 0.1);
 }
 
 .chat-meta {
@@ -2355,9 +2392,9 @@ button:focus-visible {
 }
 
 .dashboard-root.dashboard-dark .btn-danger {
-  background: rgba(208, 71, 71, 0.18);
-  border-color: rgba(208, 71, 71, 0.45);
-  color: #ff9f9f;
+  background: rgba(249, 115, 22, 0.16);
+  border-color: rgba(249, 115, 22, 0.35);
+  color: #ffb173;
 }
 
 .dashboard-root.dashboard-dark .agent-chat-card.active {
@@ -2429,4 +2466,764 @@ button:focus-visible {
     width: 100%;
     flex-wrap: wrap;
   }
+}
+
+/* Runtime Light Theme for Admin Pages */
+body.light .bg-\[\#0f0f11\] {
+  background: #f7f3ed !important;
+}
+
+body.light .bg-\[\#0f0f11\]\/80 {
+  background: rgba(247, 243, 237, 0.92) !important;
+}
+
+body.light aside.bg-\[\#0f0f11\] {
+  border-color: rgba(20, 20, 20, 0.1) !important;
+}
+
+body.light aside .text-white,
+body.light header .text-white {
+  color: #141414 !important;
+}
+
+body.light aside .text-zinc-500,
+body.light header .text-zinc-500,
+body.light header .text-zinc-400,
+body.light aside .text-zinc-400,
+body.light aside .text-zinc-600 {
+  color: #5b5b5b !important;
+}
+
+body.light header .hover\:text-white:hover {
+  color: #141414 !important;
+}
+
+body.light .skeuo-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 20, 20, 0.09) !important;
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.07) !important;
+}
+
+body.light .skeuo-inset {
+  background: #f5f1ea !important;
+  box-shadow: inset 1px 1px 2px rgba(20, 20, 20, 0.1), inset -1px -1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+body.light .skeuo-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 20, 20, 0.12) !important;
+  box-shadow: 1px 1px 2px rgba(20, 20, 20, 0.1) !important;
+}
+
+body.light .status-chip {
+  border-color: rgba(20, 20, 20, 0.14) !important;
+  color: #4f4f4f !important;
+}
+
+/* Admin shell light-theme normalization */
+body.light .admin-shell .text-white,
+body.light .admin-shell .text-zinc-100,
+body.light .admin-shell .text-zinc-200,
+body.light .admin-shell .text-zinc-300 {
+  color: #1f1f1f !important;
+}
+
+body.light .admin-shell .text-zinc-400,
+body.light .admin-shell .text-zinc-500 {
+  color: #5f5a54 !important;
+}
+
+body.light .admin-shell .text-zinc-600,
+body.light .admin-shell .text-zinc-700 {
+  color: #75706a !important;
+}
+
+body.light .admin-shell .hover\:text-white:hover {
+  color: #1f1f1f !important;
+}
+
+body.light .admin-shell .hover\:bg-white\/5:hover {
+  background: rgba(20, 20, 20, 0.06) !important;
+}
+
+body.light .admin-shell .border-white\/5 {
+  border-color: rgba(20, 20, 20, 0.12) !important;
+}
+
+body.light .admin-shell .bg-zinc-800,
+body.light .admin-shell .bg-zinc-900,
+body.light .admin-shell .bg-\[\#1a1a1e\] {
+  background: #e7e1d8 !important;
+}
+
+body.light .admin-shell .bg-zinc-700\/20 {
+  background: rgba(20, 20, 20, 0.06) !important;
+}
+
+/* Agents Page Skeuomorphic Theme */
+.agents-skeuo {
+  background: #0f0f11;
+  color: #ececec;
+  --agents-rhythm: 12px;
+  --agents-rhythm-lg: 16px;
+  --agents-radius: 14px;
+  --agents-panel-height: 560px;
+}
+
+.agents-skeuo .agents-section-head {
+  margin-bottom: 14px;
+}
+
+.agents-skeuo .agents-content {
+  display: grid;
+  gap: var(--agents-rhythm-lg);
+}
+
+.agents-skeuo .agents-controls {
+  padding: 20px;
+  border-radius: var(--agents-radius);
+}
+
+.agents-skeuo .agents-section-head h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+.agents-skeuo .agents-section-head p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.agents-skeuo .controls-stepper {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.agents-skeuo .controls-stepper li {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #bdbdc2;
+  text-align: center;
+  padding: 7px 10px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.agents-skeuo .controls-stepper li.active {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #efeff2;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.agents-skeuo .controls-layout {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.agents-skeuo .control-group {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(24, 24, 29, 0.92);
+  height: 100%;
+  padding: 14px;
+  border-radius: var(--agents-radius);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.agents-skeuo .control-group::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04));
+  opacity: 0.5;
+}
+
+.agents-skeuo .control-group.is-live {
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 4px 4px 10px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.04);
+}
+
+.agents-skeuo .control-group.is-live::before {
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(220, 220, 220, 0.9), rgba(220, 220, 220, 0.32));
+}
+
+.agents-skeuo .control-group h4 {
+  color: #ececec;
+  line-height: 1.25;
+  font-size: 0.98rem;
+  letter-spacing: 0.01em;
+}
+
+.agents-skeuo .control-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agents-skeuo .step-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ececec;
+}
+
+.agents-skeuo .control-group p {
+  color: #b7b7bb;
+  line-height: 1.4;
+  font-size: 13px;
+  min-height: 38px;
+}
+
+.agents-skeuo .controls .field label {
+  color: #bdbdc2;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.agents-skeuo .controls .field input {
+  background: #101014;
+  color: #ececec;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  width: 100%;
+  min-width: 120px;
+  min-height: 42px;
+}
+
+.agents-skeuo .controls .field {
+  min-width: 130px;
+}
+
+.agents-skeuo .controls .btn {
+  min-height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.agents-skeuo .controls .control-inline {
+  margin-top: auto;
+}
+
+.agents-skeuo .control-inline-single {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) minmax(140px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.agents-skeuo .control-inline-single .btn {
+  width: 100%;
+}
+
+.agents-skeuo .control-inline-run {
+  display: grid;
+  gap: 10px;
+}
+
+.agents-skeuo .control-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.agents-skeuo .control-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.agents-skeuo .control-actions .btn {
+  width: 100%;
+  min-width: 0;
+}
+
+.agents-skeuo .agents-social {
+  margin-top: 0;
+  gap: var(--agents-rhythm);
+}
+
+.agents-skeuo .controls,
+.agents-skeuo .social-panel,
+.agents-skeuo .panel,
+.agents-skeuo .skeuo-card {
+  background: #1a1a1e;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.04);
+}
+
+.agents-skeuo .skeuo-inset {
+  background: #121214;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.55), inset -1px -1px 3px rgba(255, 255, 255, 0.05);
+}
+
+.agents-skeuo .btn-primary {
+  background: linear-gradient(145deg, #2f2f35, #242429);
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.agents-skeuo .btn-primary:hover {
+  background: linear-gradient(145deg, #3a3a42, #2a2a31);
+}
+
+.agents-skeuo .btn-ghost {
+  background: #222226;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d8d8d8;
+}
+
+.agents-skeuo .btn-setup {
+  border-color: rgba(199, 223, 255, 0.32);
+}
+
+.agents-skeuo .btn-run {
+  border-color: rgba(188, 255, 221, 0.36);
+}
+
+.agents-skeuo .btn-demo {
+  border-color: rgba(255, 223, 188, 0.36);
+}
+
+.agents-skeuo .btn-run,
+.agents-skeuo .btn-demo {
+  font-weight: 700;
+}
+
+.agents-skeuo .btn-stop-live {
+  border-color: rgba(249, 115, 22, 0.5);
+  color: #f5c39a;
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.18), 0 0 18px rgba(249, 115, 22, 0.22);
+  animation: stopPulse 1.15s ease-in-out infinite;
+}
+
+@keyframes stopPulse {
+  0% {
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.14), 0 0 10px rgba(249, 115, 22, 0.14);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.28), 0 0 22px rgba(249, 115, 22, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.14), 0 0 10px rgba(249, 115, 22, 0.14);
+  }
+}
+
+.agents-skeuo .progress-track span.active {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #f2f2f2;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.agents-skeuo .status-chip.running,
+.agents-skeuo .status-chip.error {
+  color: #d0d0d0;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.agents-skeuo .chat-ok,
+.agents-skeuo .chat-error {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #1d1d22;
+}
+
+.agents-skeuo .avatar {
+  background: linear-gradient(145deg, rgba(180, 180, 180, 0.2), rgba(120, 120, 120, 0.35));
+  color: #efefef;
+}
+
+.agents-skeuo .status-ok,
+.agents-skeuo .status-error {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.agents-skeuo .social-layout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.agents-skeuo .social-panel {
+  min-height: var(--agents-panel-height);
+  height: var(--agents-panel-height);
+  padding: 16px;
+  border-radius: var(--agents-radius);
+  gap: var(--agents-rhythm);
+}
+
+.agents-skeuo .social-feed,
+.agents-skeuo .social-profile {
+  background: #1a1a1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.agents-skeuo .feed-head {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #17171b;
+}
+
+.agents-skeuo .feed-head p,
+.agents-skeuo .chat-meta,
+.agents-skeuo .mini-fields label {
+  color: #b7b7bb;
+}
+
+.agents-skeuo .chat-bubble,
+.agents-skeuo .chat-placeholder,
+.agents-skeuo .profile-edit-group {
+  background: #17171b;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.agents-skeuo .chat-bubble p,
+.agents-skeuo .detail-item p,
+.agents-skeuo .rename-row input,
+.agents-skeuo .mini-fields input,
+.agents-skeuo .profile-edit-group .field select {
+  color: #ececec;
+}
+
+.agents-skeuo .rename-row input,
+.agents-skeuo .mini-fields input,
+.agents-skeuo .profile-edit-group .field select {
+  background: #101014;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Force-consistent dark styling for Agents Live Activity + Profile */
+body:not(.light) .agents-skeuo .social-layout .social-feed,
+body:not(.light) .agents-skeuo .social-layout .social-profile {
+  background: #1a1a1e !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.light) .agents-skeuo .social-layout .social-feed .feed-head,
+body:not(.light) .agents-skeuo .social-layout .social-profile .detail-item,
+body:not(.light) .agents-skeuo .social-layout .social-profile .profile-edit-group,
+body:not(.light) .agents-skeuo .social-layout .social-feed .chat-bubble,
+body:not(.light) .agents-skeuo .social-layout .social-feed .chat-placeholder {
+  background: #17171b !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.light) .agents-skeuo .social-layout .social-feed .feed-head p,
+body:not(.light) .agents-skeuo .social-layout .social-feed .chat-meta,
+body:not(.light) .agents-skeuo .social-layout .social-profile .detail-item small,
+body:not(.light) .agents-skeuo .social-layout .social-profile .mini-fields label {
+  color: #b7b7bb !important;
+}
+
+body:not(.light) .agents-skeuo .social-layout .social-feed .chat-bubble p,
+body:not(.light) .agents-skeuo .social-layout .social-profile .detail-item p,
+body:not(.light) .agents-skeuo .social-layout .social-profile .mono,
+body:not(.light) .agents-skeuo .social-layout .social-profile input,
+body:not(.light) .agents-skeuo .social-layout .social-profile select {
+  color: #ececec !important;
+}
+
+body:not(.light) .agents-skeuo .social-layout .social-profile input,
+body:not(.light) .agents-skeuo .social-layout .social-profile select {
+  background: #101014 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.agents-skeuo .feed-head-portfolio {
+  align-items: stretch;
+  border-radius: var(--agents-radius);
+  gap: var(--agents-rhythm);
+}
+
+.agents-skeuo .feed-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 180px;
+}
+
+.agents-skeuo .metric-chip {
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+  border-radius: 10px;
+}
+
+.agents-skeuo .metric-chip small {
+  font-size: 10px;
+  color: #a6a6ab;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agents-skeuo .metric-chip strong {
+  font-size: 14px;
+  color: #eaeaec;
+}
+
+.agents-skeuo .portfolio-profile-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.agents-skeuo .profile-stack {
+  gap: 12px;
+}
+
+.agents-skeuo .portfolio-label {
+  font-size: 10px;
+  color: #a6a6ab;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agents-skeuo .portfolio-profile p {
+  margin: 4px 0 0;
+}
+
+.agents-skeuo .portfolio-purpose {
+  margin-top: 10px !important;
+  color: #b9b9be;
+  line-height: 1.5;
+}
+
+.agents-skeuo .profile-edit-group {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 29, 0.85);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.agents-skeuo .chat-feed-list,
+.agents-skeuo .agent-chat-list {
+  gap: 8px;
+}
+
+.agents-skeuo .chat-bubble,
+.agents-skeuo .chat-placeholder {
+  border-radius: 12px;
+}
+
+.agents-skeuo .detail-item small,
+.agents-skeuo .portfolio-label,
+.agents-skeuo .metric-chip small {
+  letter-spacing: 0.06em;
+}
+
+/* Light Mode Overrides for Agents Page */
+body.light .agents-skeuo {
+  background: #f3efe9;
+  color: #222;
+}
+
+body.light .agents-skeuo .controls,
+body.light .agents-skeuo .social-panel,
+body.light .agents-skeuo .panel,
+body.light .agents-skeuo .skeuo-card {
+  background: #f8f5f1;
+  border-color: rgba(20, 20, 20, 0.1);
+  box-shadow: 8px 8px 18px rgba(0, 0, 0, 0.08), -8px -8px 18px rgba(255, 255, 255, 0.7);
+}
+
+body.light .agents-skeuo .agents-controls {
+  background: #f8f5f1;
+}
+
+body.light .agents-skeuo .skeuo-inset {
+  background: #ece7df;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.12), inset -2px -2px 5px rgba(255, 255, 255, 0.7);
+}
+
+body.light .agents-skeuo .control-group {
+  border-color: rgba(20, 20, 20, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+body.light .agents-skeuo .control-group::before {
+  background: linear-gradient(90deg, rgba(20, 20, 20, 0.28), rgba(20, 20, 20, 0.06));
+}
+
+body.light .agents-skeuo .control-group.is-live {
+  border-color: rgba(20, 20, 20, 0.22);
+  box-shadow: 0 0 0 1px rgba(20, 20, 20, 0.08), 8px 8px 18px rgba(0, 0, 0, 0.08), -8px -8px 18px rgba(255, 255, 255, 0.7);
+}
+
+body.light .agents-skeuo .control-group.is-live::before {
+  background: linear-gradient(90deg, rgba(20, 20, 20, 0.66), rgba(20, 20, 20, 0.2));
+}
+
+body.light .agents-skeuo .control-group h4 {
+  color: #27231f;
+}
+
+body.light .agents-skeuo .controls-stepper li {
+  border-color: rgba(20, 20, 20, 0.14);
+  background: rgba(20, 20, 20, 0.04);
+  color: #69635d;
+}
+
+body.light .agents-skeuo .controls-stepper li.active {
+  border-color: rgba(20, 20, 20, 0.22);
+  background: rgba(20, 20, 20, 0.1);
+  color: #2d2926;
+}
+
+body.light .agents-skeuo .step-badge {
+  border-color: rgba(20, 20, 20, 0.2);
+  background: rgba(20, 20, 20, 0.06);
+  color: #39342e;
+}
+
+body.light .agents-skeuo .control-group p {
+  color: #66605a;
+}
+
+body.light .agents-skeuo .controls .field label {
+  color: #67605a;
+}
+
+body.light .agents-skeuo .controls .field input {
+  background: #fff;
+  color: #2b2926;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+}
+
+body.light .agents-skeuo .btn-primary {
+  background: linear-gradient(145deg, #d8d2c9, #c7c0b6);
+  color: #2b2926;
+  border: 1px solid rgba(20, 20, 20, 0.16);
+}
+
+body.light .agents-skeuo .btn-primary:hover {
+  background: linear-gradient(145deg, #cec7bc, #bfb7ac);
+}
+
+body.light .agents-skeuo .btn-ghost {
+  background: #f8f5f1;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+  color: #3b3834;
+}
+
+body.light .agents-skeuo .progress-track span.active {
+  border-color: rgba(20, 20, 20, 0.24);
+  color: #2f2c29;
+  background: rgba(20, 20, 20, 0.08);
+}
+
+body.light .agents-skeuo .status-chip.running,
+body.light .agents-skeuo .status-chip.error {
+  color: #4b4640;
+  border-color: rgba(20, 20, 20, 0.22);
+}
+
+body.light .agents-skeuo .chat-ok,
+body.light .agents-skeuo .chat-error {
+  border-color: rgba(20, 20, 20, 0.12);
+  background: #fff;
+}
+
+body.light .agents-skeuo .avatar {
+  background: linear-gradient(145deg, rgba(160, 150, 138, 0.25), rgba(215, 209, 201, 0.45));
+  color: #504a43;
+}
+
+body.light .agents-skeuo .status-ok,
+body.light .agents-skeuo .status-error {
+  background: rgba(20, 20, 20, 0.08);
+  border-color: rgba(20, 20, 20, 0.18);
+}
+
+@media (max-width: 1280px) {
+  .agents-skeuo .controls-layout {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .agents-skeuo .social-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .agents-skeuo .social-panel {
+    min-height: auto;
+    height: auto;
+  }
+
+  .agents-skeuo .controls .field {
+    min-width: 150px;
+  }
+
+  .agents-skeuo .feed-head-portfolio {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 780px) {
+  .agents-skeuo .controls-stepper {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .agents-skeuo .controls-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .agents-skeuo .agents-controls {
+    padding: 16px;
+  }
+
+  .agents-skeuo .controls .control-inline {
+    gap: 8px;
+  }
+
+  .agents-skeuo .control-inline-single,
+  .agents-skeuo .control-inputs,
+  .agents-skeuo .control-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .agents-skeuo .controls .btn {
+    width: 100%;
+  }
+}
+
+body.light .agents-skeuo .metric-chip small,
+body.light .agents-skeuo .portfolio-label {
+  color: #6a645d;
+}
+
+body.light .agents-skeuo .metric-chip strong {
+  color: #2d2926;
+}
+
+body.light .agents-skeuo .portfolio-purpose {
+  color: #66605a;
+}
+
+body.light .agents-skeuo .profile-edit-group {
+  border: 1px solid rgba(20, 20, 20, 0.1);
+  background: rgba(255, 255, 255, 0.72);
 }

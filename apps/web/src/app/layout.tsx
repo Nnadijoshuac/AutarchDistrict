@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Space_Grotesk, Fraunces } from "next/font/google";
+import { Space_Grotesk, Fraunces, Sora } from "next/font/google";
 import "./globals.css";
 
 const bodyFont = Space_Grotesk({
@@ -13,6 +13,12 @@ const displayFont = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["500", "600", "700"]
+});
+
+const logoFont = Sora({
+  subsets: ["latin"],
+  variable: "--font-logo",
+  weight: ["600", "700"]
 });
 
 export const metadata: Metadata = {
@@ -32,7 +38,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${bodyFont.variable} ${displayFont.variable}`}>{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable} ${logoFont.variable}`}>{children}</body>
     </html>
   );
 }

@@ -26,7 +26,17 @@ export type PolicyViolation = {
   createdAt: string;
 };
 
+export type TransactionRow = {
+  agentId: string;
+  action: string | null;
+  status: string;
+  signature: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/backend";
+const WS_BASE_FROM_ENV = process.env.NEXT_PUBLIC_WS_URL;
 
 export type DemoSetupPayload = {
   numAgents?: number;
@@ -101,6 +111,9 @@ export async function wakeBackend(maxAttempts = 6, delayMs = 2500): Promise<void
 
 export async function listAgents(): Promise<Agent[]> {
   const res = await apiFetch(`${API_BASE}/agents`, { cache: "no-store" });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
   const body = (await res.json()) as { agents: Agent[] };
   return body.agents;
 }
@@ -111,6 +124,9 @@ export async function createAgents(count: number): Promise<Agent[]> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ count })
   });
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
   const body = (await res.json()) as { agents: Agent[] };
   return body.agents;
 }
@@ -181,6 +197,19 @@ export async function listPolicyViolations(): Promise<PolicyViolation[]> {
   return body.violations;
 }
 
+export async function listTransactions(): Promise<TransactionRow[]> {
+  const res = await apiFetch(`${API_BASE}/transactions`, { cache: "no-store" });
+  if (res.status === 404) {
+    // Backward compatibility for older backend deployments without /transactions.
+    return [];
+  }
+  if (!res.ok) {
+    throw await parseApiError(res);
+  }
+  const body = (await res.json()) as { transactions: TransactionRow[] };
+  return body.transactions;
+}
+
 export async function setupDemo(payload: DemoSetupPayload = {}): Promise<DemoSetupResponse> {
   const res = await apiFetch(`${API_BASE}/demo/setup`, {
     method: "POST",
@@ -215,4 +244,20 @@ export async function stopDemo(): Promise<DemoStopResponse> {
     throw await parseApiError(res);
   }
   return (await res.json()) as DemoStopResponse;
+}
+
+export function resolveWsUrl(): string {
+  if (WS_BASE_FROM_ENV && WS_BASE_FROM_ENV.trim().length > 0) {
+    return WS_BASE_FROM_ENV;
+  }
+  if (API_BASE.startsWith("http://")) {
+    return `${API_BASE.replace("http://", "ws://").replace(/\/+$/, "")}/ws`;
+  }
+  if (API_BASE.startsWith("https://")) {
+    return `${API_BASE.replace("https://", "wss://").replace(/\/+$/, "")}/ws`;
+  }
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`;
+  }
+  return "ws://localhost:3001/ws";
 }
