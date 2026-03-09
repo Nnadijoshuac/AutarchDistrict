@@ -322,6 +322,7 @@ export async function buildServer() {
     notifier
   });
   app.get("/policy-violations", async () => ({ violations: await agentStore.listPolicyViolations(200) }));
+  app.get("/transactions", async () => ({ transactions: await agentStore.listRecentTransactions(200) }));
   app.get("/metrics", async (_req, reply) => {
     reply.header("content-type", metrics.contentType());
     return metrics.expose();
