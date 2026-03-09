@@ -27,11 +27,15 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:3001/ws";
 type BusyAction = "create" | "setup" | "run" | "stop" | null;
 type JudgeStep = "idle" | "agents" | "setup" | "running" | "completed";
 
-function shortPubkey(v: string) {
+function shortPubkey(v?: string | null) {
+  if (!v) return "n/a";
+  if (v.length <= 12) return v;
   return `${v.slice(0, 7)}...${v.slice(-5)}`;
 }
 
-function shortId(v: string) {
+function shortId(v?: string | null) {
+  if (!v) return "n/a";
+  if (v.length <= 20) return v;
   return `${v.slice(0, 14)}...${v.slice(-6)}`;
 }
 
@@ -518,26 +522,6 @@ export default function DashboardPage() {
                   <div>
                     <strong>Agent Role</strong>
                     <p>{agentPurpose(selected.strategy)}</p>
-                  </div>
-                  <div className="feed-copy-actions">
-                    <button
-                      type="button"
-                      className="copy-btn"
-                      aria-label="Copy selected agent ID"
-                      onClick={() => void copyText(selected.agentId, "feed-agent-id")}
-                    >
-                      <CopyIcon />
-                      <span>{copiedField === "feed-agent-id" ? "Copied" : "Copy ID"}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="copy-btn"
-                      aria-label="Copy selected agent public key"
-                      onClick={() => void copyText(selected.publicKey, "feed-pubkey")}
-                    >
-                      <CopyIcon />
-                      <span>{copiedField === "feed-pubkey" ? "Copied" : "Copy Key"}</span>
-                    </button>
                   </div>
                 </div>
 
